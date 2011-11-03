@@ -6,9 +6,9 @@ var webid = require('./webid.js');
 
 var configuration = require("./configuration");
 
-var options = {   key: fs.readFileSync('./ssl/privatekey.pem'),   
-                  cert: fs.readFileSync('./ssl/certificate.pem'),   
-                  requestCert: true, }; 
+var options = {   key: fs.readFileSync('../ssl/privatekey.pem'),   
+                  cert: fs.readFileSync('../ssl/certificate.pem'),   
+                  requestCert: true }; 
 
 var profilePage = function(profile) {
     var html = "<html><head><title>Success: "+profile.toArray()[0].subject.valueOf()+"</title></head><body>"
@@ -85,7 +85,7 @@ https.createServer(options,function (req, res) {
         }
     } else {
         res.writeHead(200,{"Content-Type":"text/html"});
-        html = "<html><head><title>WebID node.js Demo</title></head><body>"
+        var html = "<html><head><title>WebID node.js Demo</title></head><body>"
         html = html+ "<p>This is a demo implementation of <a href='http://www.w3.org/2005/Incubator/webid/spec/'>WebID</a> running on <a href='http://nodejs.org/'>node.js</a>.</p><p>Click <a href='/login'><b>here</b></a> to log in using WebID.</p>"
         html = html + "<p>You can get your WebID in a provider like <a href='http://foaf.me/index.php'>this one</a> or create your own.<br/>"
         html = html + "<a href='http://www.w3.org/wiki/WebID'>This W3C wiki page</a> is a good place to learn more about WebID and why you should care about it</p></body></html>";

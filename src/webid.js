@@ -1,4 +1,4 @@
-var raptor = require('./raptor.js');
+//var raptor = require('./raptor.js');
 var url = require('url');
 var http = require('http');
 var rdfstore = require('./rdfstore.js');
