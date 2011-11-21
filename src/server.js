@@ -6,8 +6,8 @@ var webid = require('./webid.js');
 
 var configuration = require("./configuration");
 
-var options = {   key: fs.readFileSync('../ssl/privatekey.pem'),   
-                  cert: fs.readFileSync('../ssl/certificate.pem'),   
+var options = {   key: fs.readFileSync('./ssl/privatekey.pem'),   
+                  cert: fs.readFileSync('./ssl/certificate.pem'),   
                   requestCert: true }; 
 
 var profilePage = function(profile) {
@@ -54,6 +54,10 @@ var profilePage = function(profile) {
     return html
 
 };
+// Init earl File
+if (configuration.earl) {
+    
+}
 
 console.log("trying to create server at "+configuration.port);
 
@@ -62,6 +66,9 @@ https.createServer(options,function (req, res) {
         try {
             var certificate = req.connection.getPeerCertificate();
             if(certificate) {
+                if (configuration.earl) {
+                    
+                }
                 var verifAgent = new webid.VerificationAgent(certificate);
                 verifAgent.verify(function(err, profileGraph){
                     if(err) {
@@ -81,7 +88,7 @@ https.createServer(options,function (req, res) {
         } catch(e) {
                 res.writeHead(500,{"Content-Type":"text/plain"});
                 res.write("There was an error processing your certificate");
-                res.end();
+                res.destroy();
         }
     } else {
         res.writeHead(200,{"Content-Type":"text/html"});
@@ -91,7 +98,6 @@ https.createServer(options,function (req, res) {
         html = html + "<a href='http://www.w3.org/wiki/WebID'>This W3C wiki page</a> is a good place to learn more about WebID and why you should care about it</p></body></html>";
 
         res.write(html);
-        res.end();
     }
 }).listen(configuration.port);
 
