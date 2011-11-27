@@ -1,0 +1,3 @@
+[submodule "src/node_modules/node-earl"]
+	path = src/node_modules/node-earl
+	url = https://magnetik@github.com/magnetik/node-earl.git
