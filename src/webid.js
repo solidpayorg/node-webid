@@ -7,7 +7,7 @@ exports.VerificationAgent = function(certificate){
     this.subjectAltName = certificate.subjectaltname;
     this.modulus = certificate.modulus;
     this.exponent = certificate.exponent;
-    this.uris = this.subjectAltName.split(",")
+    this.uris = this.subjectAltName.split(",");
     for(var i=0; i<this.uris.length; i++) {
         this.uris[i] = this.uris[i].split("URI:")[1];
     }
@@ -16,10 +16,12 @@ exports.VerificationAgent = function(certificate){
 exports.VerificationAgent.prototype.verify = function(callback) {
     this._verify(this.uris,callback);
 };
-
+/**
+ * 
+ */
 exports.VerificationAgent.prototype._verify = function(uris, callback) {
     if(uris.length === 0) {
-        callback(true,"NotVerified");
+        callback(true,"Not ok");
     } else {
         var that = this;
         var parsedUrl = url.parse(uris[0]);
@@ -28,27 +30,28 @@ exports.VerificationAgent.prototype._verify = function(uris, callback) {
                        method: 'GET',
                        headers: {"Accept": "application/rdf+xml,application/xhtml+xml,text/html"}};
 
-        var req = http.request(options,function(response){
-            if(response.statusCode==200) {
-                var res = "";
-                
-                response.on('data', function(chunk){
-                    res = res+chunk;
-                });
+        var req = function () {
+			http.request(options,function(response){
+				if(response.statusCode==200) {
+					var res = "";
+					
+					response.on('data', function(chunk){
+						res = res+chunk;
+					});
 
-                response.on('end', function(){
-                    var contentType = (response.headers['content-type'] || response.headers['Content-Type'])
-                    if(contentType) {
-                        that._verifyWebId(uris[0], res, contentType, callback);
-                    } else {
-                        callback(true,"missingResponseContentType");
-                    }
-                });
-            } else {
-                callback(true, "badRemoteResponse");
-            }
-        });
-
+					response.on('end', function(){
+						var contentType = (response.headers['content-type'] || response.headers['Content-Type'])
+						if(contentType) {
+							that._verifyWebId(uris[0], res, contentType, callback);
+						} else {
+							callback(true,"missingResponseContentType");
+						}
+					});
+				} else {
+					callback(true, "badRemoteResponse, code is :" + response.headers.location);
+				}
+			});
+		};
         req.on('error', function(error) {
             uris.shift();
             that._verify(uris, callback);
@@ -57,7 +60,28 @@ exports.VerificationAgent.prototype._verify = function(uris, callback) {
         req.end();
     }
 };
+exports.VerificationAgent.prototype._getFile = function (url) {
+	http.request(options,function(response){
+		if(response.statusCode==200) {
+			var res = "";
+			
+			response.on('data', function(chunk){
+				res = res+chunk;
+			});
 
+			response.on('end', function(){
+				var contentType = (response.headers['content-type'] || response.headers['Content-Type'])
+				if(contentType) {
+					that._verifyWebId(url, res, contentType, callback);
+				} else {
+					callback(true,"missingResponseContentType");
+				}
+			});
+		} else {
+			callback(true, "badRemoteResponse, code is :" + response.headers.location);
+		}
+	});
+}
 exports.VerificationAgent.prototype._verifyWebId = function(webidUri, data, mediaTypeHeader, callback) {
     var that = this;
     var mediaType = null;
@@ -168,4 +192,8 @@ exports.VerificationAgent.prototype._resolveExponentValue = function(store, expo
             cb(exponent.value);
         }
     }
+};
+
+exports.VerificationError = {
+	certificateProvidedSAN: 0
 };

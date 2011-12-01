@@ -1,10 +1,21 @@
 var https = require('https'); 
 var util = require('util'); 
 var fs = require('fs'); 
+
 var webid = require('./webid.js');
 
+var jade = require('jade');
 
+function renderJadeFile(template,options) {
+	var fn = jade.compile(template, options);
+	return fn(options.locals);
+}
+
+// Getting configuration
 var configuration = require("./configuration");
+if (configuration.earl) {
+	var earl = require('./earlWebID');
+}
 
 var options = {   key: fs.readFileSync('./ssl/privatekey.pem'),   
                   cert: fs.readFileSync('./ssl/certificate.pem'),   
@@ -56,7 +67,7 @@ var profilePage = function(profile) {
 };
 // Init earl File
 if (configuration.earl) {
-    
+    var earlWebID = new earl.earlWebid();
 }
 
 console.log("trying to create server at "+configuration.port);
@@ -66,9 +77,7 @@ https.createServer(options,function (req, res) {
         try {
             var certificate = req.connection.getPeerCertificate();
             if(certificate) {
-                if (configuration.earl) {
-                    
-                }
+                if (configuration.earl) { earlWebID.certificateProvided(true); }
                 var verifAgent = new webid.VerificationAgent(certificate);
                 verifAgent.verify(function(err, profileGraph){
                     if(err) {
@@ -79,16 +88,26 @@ https.createServer(options,function (req, res) {
                         res.write(profilePage(profileGraph));
                     }
                     res.end();
-                });
+				});
             } else {
+				if (configuration.earl) { earlWebID.certificateProvided(false); }
                 res.writeHead(400,{"Content-Type":"text/plain"});
                 res.write("not auth");
                 res.end();
             }
         } catch(e) {
-                res.writeHead(500,{"Content-Type":"text/plain"});
-                res.write("There was an error processing your certificate");
-                res.destroy();
+			var path = 'src/template/error.jade';
+			var options = {
+				filename: path
+			};
+			var locals = {
+				title : 'Error'
+			};
+			res.writeHead(500,{"Content-Type":"text/html"});
+			var fn = jade.compile(fs.readFileSync('src/template/error.jade'), options);
+			
+			res.write(fn(locals));
+			res.end();
         }
     } else {
         res.writeHead(200,{"Content-Type":"text/html"});
@@ -98,6 +117,7 @@ https.createServer(options,function (req, res) {
         html = html + "<a href='http://www.w3.org/wiki/WebID'>This W3C wiki page</a> is a good place to learn more about WebID and why you should care about it</p></body></html>";
 
         res.write(html);
+		res.end();
     }
 }).listen(configuration.port);
 
