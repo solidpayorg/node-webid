@@ -2,6 +2,8 @@ var https = require('https');
 var util = require('util'); 
 var fs = require('fs'); 
 
+var _ = require('underscore')._;
+
 var webid = require('./webid.js');
 
 var jade = require('jade');
@@ -76,7 +78,7 @@ https.createServer(options,function (req, res) {
     if(req.url == "/login") {
         try {
             var certificate = req.connection.getPeerCertificate();
-            if(certificate) {
+            if(!_.isEmpty(certificate)) {
                 if (configuration.earl) { earlWebID.certificateProvided(true); }
                 var verifAgent = new webid.VerificationAgent(certificate);
                 verifAgent.verify(function(err, profileGraph){
@@ -91,9 +93,7 @@ https.createServer(options,function (req, res) {
 				});
             } else {
 				if (configuration.earl) { earlWebID.certificateProvided(false); }
-                res.writeHead(400,{"Content-Type":"text/plain"});
-                res.write("not auth");
-                res.end();
+                throw new Error("Certificate not provided");
             }
         } catch(e) {
 			var path = 'src/template/error.jade';
@@ -101,7 +101,8 @@ https.createServer(options,function (req, res) {
 				filename: path
 			};
 			var locals = {
-				title : 'Error'
+				title : 'Error',
+                error : e.message
 			};
 			res.writeHead(500,{"Content-Type":"text/html"});
 			var fn = jade.compile(fs.readFileSync('src/template/error.jade'), options);
