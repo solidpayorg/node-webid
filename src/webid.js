@@ -2,6 +2,10 @@
 var url = require('url');
 var http = require('http');
 var request = require('request');
+
+var $ = require('jQuery');
+var nodeRDFquery = require('./nodeRDFquery')($);
+
 var rdfstore = require('./rdfstore.js');
 
 exports.VerificationAgent = function (certificate) {
