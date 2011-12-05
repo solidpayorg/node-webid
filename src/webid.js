@@ -35,8 +35,9 @@ exports.VerificationAgent.prototype._verify = function (uris, callback) {
         }; 
         
 
-        var request = request(options, function (error, response, body) {
+        var rq = request(options, function (error, response, body) {
             if (!error & response.statusCode == 200) {
+                console.log(callback);
                 that._verifyWebId(uris[0], body, response.headers['content-type'], callback);
             }
             else {
@@ -46,28 +47,6 @@ exports.VerificationAgent.prototype._verify = function (uris, callback) {
         });
     }
 };
-exports.VerificationAgent.prototype._getFile = function (url) {
-    http.request(options, function (response) {
-        if (response.statusCode == 200) {
-            var res = "";
-
-            response.on('data', function (chunk) {
-                res = res + chunk;
-            });
-
-            response.on('end', function () {
-                var contentType = (response.headers['content-type'] || response.headers['Content-Type'])
-                if (contentType) {
-                    that._verifyWebId(url, res, contentType, callback);
-                } else {
-                    callback(true, "missingResponseContentType");
-                }
-            });
-        } else {
-            callback(true, "badRemoteResponse, code is :" + response.headers.location);
-        }
-    });
-}
 exports.VerificationAgent.prototype._verifyWebId = function (webidUri, data, mediaTypeHeader, callback) {
     var that = this;
     var mediaType = null;
