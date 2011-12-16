@@ -1,0 +1,36 @@
+{
+    "name": "webid",
+    "version": "0.0.1",
+    "description": "WebID helper",
+    "keywords": [
+      "webid",
+      "w3c",
+    ],
+    "maintainers": [{
+      "name": "Baptiste Lafontaine",
+      "email": "baptiste33@gmail.com",
+      "url": "http://magnetik.org"
+    }],
+    "contributors": [
+      {
+        "name":  "Baptiste Lafontaine",
+        "email": "baptiste33@gmail.com"
+      }
+    ],
+    "bugs": {
+        "url": "https://github.com/magnetik/node-webid/issues"
+    },
+    "licenses": [
+        {
+            "type": "MIT"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "git",
+            "url": "git@github.com:magnetik/node-webid.git"
+        }
+    ],
+    "engines" : { "node" : ">=0.5.10" },
+    "main": "./src/webid"
+}

@@ -1,7 +1,8 @@
-This is a demo implementation of WebID in node.js
+#node-webid
 
-To make it run you need:
+Node.js module with tools to help using WebID (http://www.webid.info).
 
-- version >0.5 of node.js including the changes that make the additional fields in client certificates available (https://github.com/joyent/node/pull/1286)
-- start the server with:
-    node ./src/server.js
+##Licence
+
+The lib is available under MIT Licence : http://www.opensource.org/licenses/MIT
+
