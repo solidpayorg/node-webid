@@ -31,6 +31,9 @@
             "url": "git@github.com:magnetik/node-webid.git"
         }
     ],
+    "dependencies": {
+        "request": ">= 1.2.0"
+    },
     "engines" : { "node" : ">=0.5.10" },
     "main": "./src/webid"
 }
