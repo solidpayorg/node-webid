@@ -6,7 +6,16 @@ var querystring = require('querystring');
 
 var rdfstore = require('./rdfstore.js');
 
-exports.VerificationAgent = function (certificate) {
+var VerificationAgentError = function (name, message) {  
+    this.name = name || "Error during WebID validation";
+    this.message = message || "";  
+}  
+VerificationAgentError.prototype = new Error();  
+VerificationAgentError.prototype.constructor = exports.VerificationAgentError;  
+
+
+
+var VerificationAgent = function (certificate) {
     console.log("Got certificate alt name" + this.subjectAltName);
     this.subjectAltName = certificate.subjectaltname;
     this.modulus = certificate.modulus;
@@ -17,13 +26,13 @@ exports.VerificationAgent = function (certificate) {
     }
 };
 
-exports.VerificationAgent.prototype.verify = function (callback) {
+VerificationAgent.prototype.verify = function (callback) {
     this._verify(this.uris, callback);
 };
 /**
  * 
  */
-exports.VerificationAgent.prototype._verify = function (uris, callback) {
+VerificationAgent.prototype._verify = function (uris, callback) {
     if (uris.length === 0) {
         throw new VerificationAgentError("certificateProvidedSAN");
     } else {
@@ -49,7 +58,7 @@ exports.VerificationAgent.prototype._verify = function (uris, callback) {
         });
     }
 };
-exports.VerificationAgent.prototype._clean = function (input, pattern) {
+VerificationAgent.prototype._clean = function (input, pattern) {
     var match = input.match(pattern);
     if (match == null) {
         return null;
@@ -59,17 +68,17 @@ exports.VerificationAgent.prototype._clean = function (input, pattern) {
     }
 }
 
-exports.VerificationAgent.prototype._cleanModulus = function (modulus) {
+VerificationAgent.prototype._cleanModulus = function (modulus) {
     var that = this;
     return that._clean(modulus,/[0-9A-Fa-f]+/);
 }
 
-exports.VerificationAgent.prototype._cleanExponent = function (exponent) {
+VerificationAgent.prototype._cleanExponent = function (exponent) {
     var that = this;
     return that._clean(exponent,/[0-9]+/);
 }
 
-exports.VerificationAgent.prototype._verifyWebId = function (webidUri, data, mediaTypeHeader, callback) {
+VerificationAgent.prototype._verifyWebId = function (webidUri, data, mediaTypeHeader, callback) {
     var that = this;
     var mediaType = null;
     if (mediaTypeHeader === "application/rdf+xml") {
@@ -111,7 +120,10 @@ exports.VerificationAgent.prototype._verifyWebId = function (webidUri, data, med
                                     }
                                 }
                                 if (modulus != null && exponent != null) {
-                                    console.log("Data ok");
+                                    // Transform store to graph
+                                    store.node(webidUri,function(success, graph) {
+                                        callback(graph);
+                                    });
                                 } else {
                                     throw new VerificationAgentError("profileAllKeysWellFormed");
                                 }
@@ -134,9 +146,5 @@ exports.VerificationAgent.prototype._verifyWebId = function (webidUri, data, med
     });
 };
 
-exports.VerificationAgentError = function (name, message) {  
-    this.name = name || "Error during WebID validation";
-    this.message = message || "";  
-}  
-exports.VerificationAgentError.prototype = new Error();  
-exports.VerificationAgentError.prototype.constructor = exports.VerificationAgentError;  
+exports.VerificationAgentError = VerificationAgentError;
+exports.VerificationAgent = VerificationAgent;
