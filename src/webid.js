@@ -6,17 +6,7 @@ var querystring = require('querystring');
 
 var rdfstore = require('./rdfstore.js');
 
-var VerificationAgentError = function (name, message) {  
-    this.name = name || "Error during WebID validation";
-    this.message = message || "";  
-}  
-VerificationAgentError.prototype = new Error();  
-VerificationAgentError.prototype.constructor = exports.VerificationAgentError;  
-
-
-
 var VerificationAgent = function (certificate) {
-    console.log("Got certificate alt name" + this.subjectAltName);
     this.subjectAltName = certificate.subjectaltname;
     this.modulus = certificate.modulus;
     this.exponent = certificate.exponent;
@@ -25,7 +15,6 @@ var VerificationAgent = function (certificate) {
         this.uris[i] = this.uris[i].split("URI:")[1];
     }
 };
-
 VerificationAgent.prototype.verify = function (callback) {
     this._verify(this.uris, callback);
 };
@@ -34,7 +23,7 @@ VerificationAgent.prototype.verify = function (callback) {
  */
 VerificationAgent.prototype._verify = function (uris, callback) {
     if (uris.length === 0) {
-        throw new VerificationAgentError("certificateProvidedSAN");
+        callback(false,"certificateProvidedSAN");
     } else {
         var that = this;
         var parsedUrl = url.format(uris[0]);
@@ -120,31 +109,39 @@ VerificationAgent.prototype._verifyWebId = function (webidUri, data, mediaTypeHe
                                     }
                                 }
                                 if (modulus != null && exponent != null) {
-                                    // Transform store to graph
-                                    store.node(webidUri,function(success, graph) {
-                                        callback(graph);
-                                    });
+                                    // Check if the modulus and exponent are equals
+                                    if ((modulus == that.modulus) && (exponent == that.exponent)) {
+                                        // Every thing is OK, webid valid
+                                        // Transform store to graph
+                                        store.node(webidUri, function(success, graph) {
+                                            callback(true,graph);
+                                        });
+                                    }
+                                    else {
+                                        // The certificate does not identity this FOAF file
+                                        callback(false, "falseWebID")
+                                    }
                                 } else {
-                                    throw new VerificationAgentError("profileAllKeysWellFormed");
+                                    callback(false,"profileAllKeysWellFormed");
                                 }
                             } else {
-                                throw new VerificationAgentError("profileAllKeysWellFormed");
+                                callback(false,"profileAllKeysWellFormed");
                             }
                         });
                     }
                     else {
                         // Can't load 
-                        throw new VerificationAgentError("profileWellFormed");
+                        callback(false,"profileWellFormed");
                     }
                 });
             });
         }
         else {
             // Can't download profile
-            throw new VerificationAgentError("profileGet");
+            callback(false,"profileGet");
         }
     });
 };
 
-exports.VerificationAgentError = VerificationAgentError;
 exports.VerificationAgent = VerificationAgent;
+exports.foafParse = foafParse;
