@@ -6,10 +6,26 @@ var querystring = require('querystring');
 
 var rdfstore = require('./rdfstore.js');
 
-var foafParse = function (graph) {
+var Foaf = function (graph) {
+    this.graph = graph;
+}
+Foaf.prototype.parse = function () {
+    var that = this;
     return {
-            name: profile.filter(function(t){ return t.predicate.equals("http://xmlns.com/foaf/0.1/name") }).toArray()
+            name: that._getValue('name'),
+            birthday: that._getValue('birthday')
         };
+}
+Foaf.prototype._getValue = function (value) {
+    var that = this;
+    var temp = this.graph.filter(function(t){ return t.predicate.equals("http://xmlns.com/foaf/0.1/" + value) }).toArray();
+    if (temp.length == 1) {
+        return temp[0].object.valueOf();
+    }
+    //TODO: cover the case when 
+    else {
+        return ""
+    }
 }
 
 var VerificationAgent = function (certificate) {
@@ -141,4 +157,4 @@ VerificationAgent.prototype._verifyWebId = function (webidUri, data, mediaTypeHe
 };
 
 exports.VerificationAgent = VerificationAgent;
-exports.foafParse = foafParse;
+exports.Foaf = Foaf;
