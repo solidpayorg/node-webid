@@ -6,10 +6,16 @@ var querystring = require('querystring');
 
 var rdfstore = require('./rdfstore.js');
 
+var foafParse = function (graph) {
+    return {
+            name: profile.filter(function(t){ return t.predicate.equals("http://xmlns.com/foaf/0.1/name") }).toArray()
+        };
+}
+
 var VerificationAgent = function (certificate) {
     this.subjectAltName = certificate.subjectaltname;
     this.modulus = certificate.modulus;
-    this.exponent = certificate.exponent;
+    this.exponent = parseInt(certificate.exponent,16).toString(); // Convert to hex
     this.uris = this.subjectAltName.split(",");
     for (var i = 0; i < this.uris.length; i++) {
         this.uris[i] = this.uris[i].split("URI:")[1];
@@ -48,23 +54,13 @@ VerificationAgent.prototype._verify = function (uris, callback) {
     }
 };
 VerificationAgent.prototype._clean = function (input, pattern) {
-    var match = input.match(pattern);
+    var match = input.match(/[0-9A-Fa-f]+/);
     if (match == null) {
         return null;
     }
     else {
-        return match[0];
+        return match[0].toUpperCase();
     }
-}
-
-VerificationAgent.prototype._cleanModulus = function (modulus) {
-    var that = this;
-    return that._clean(modulus,/[0-9A-Fa-f]+/);
-}
-
-VerificationAgent.prototype._cleanExponent = function (exponent) {
-    var that = this;
-    return that._clean(exponent,/[0-9]+/);
 }
 
 VerificationAgent.prototype._verifyWebId = function (webidUri, data, mediaTypeHeader, callback) {
@@ -75,7 +71,6 @@ VerificationAgent.prototype._verifyWebId = function (webidUri, data, mediaTypeHe
     } else {
         mediaType = 'rdfa';
     }
-
     var options = {
         url: "http://semola-rdf.appspot.com/converter",
         method: 'POST',
@@ -104,11 +99,13 @@ VerificationAgent.prototype._verifyWebId = function (webidUri, data, mediaTypeHe
                                 var exponent = null;
                                 for (var i = 0; i < results.length; i++) {
                                     if (results[i].webid && results[i].webid.value === webidUri) {
-                                        modulus = that._cleanModulus(results[i].m.value);
-                                        exponent = that._cleanExponent(results[i].e.value);
+                                        modulus = that._clean(results[i].m.value);
+                                        exponent = that._clean(results[i].e.value);
                                     }
                                 }
                                 if (modulus != null && exponent != null) {
+                                    console.log("Cert exponent :" + exponent);
+                                    console.log("That exponent :" + that.exponent);
                                     // Check if the modulus and exponent are equals
                                     if ((modulus == that.modulus) && (exponent == that.exponent)) {
                                         // Every thing is OK, webid valid
