@@ -12,6 +12,7 @@ var Foaf = function (graph) {
 Foaf.prototype.parse = function () {
     var that = this;
     return {
+            title: "WebID Sucess !",
             name: that._getValue('name'),
             birthday: that._getValue('birthday')
         };
