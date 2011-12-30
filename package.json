@@ -4,7 +4,8 @@
     "description": "WebID helper",
     "keywords": [
       "webid",
-      "w3c"
+      "w3c",
+      "foaf"
     ],
     "maintainers": [{
       "name": "Baptiste Lafontaine",
