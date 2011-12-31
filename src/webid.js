@@ -121,8 +121,6 @@ VerificationAgent.prototype._verifyWebId = function (webidUri, data, mediaTypeHe
                                     }
                                 }
                                 if (modulus != null && exponent != null) {
-                                    console.log("Cert exponent :" + exponent);
-                                    console.log("That exponent :" + that.exponent);
                                     // Check if the modulus and exponent are equals
                                     if ((modulus == that.modulus) && (exponent == that.exponent)) {
                                         // Every thing is OK, webid valid
