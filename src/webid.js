@@ -10,25 +10,41 @@ var Foaf = function (graph) {
     this.graph = graph;
 }
 Foaf.prototype.parse = function () {
-    var that = this;
     return {
             title: "WebID Sucess !",
-            name: that._getValue('name'),
-            birthday: that._getValue('birthday')
+            name: this._getValue('name'),
+            birthday: this._getValue('birthday'),
+            webid: this._getWebid()
         };
 }
+/**
+ * Gets the WebID (URI).
+ */
+Foaf.prototype._getWebid = function() {
+    var temp = this.graph.filter(function(t){ return t.predicate.equals("http://www.w3.org/ns/auth/cert#key") }).toArray();
+    if (temp.length == 1) {
+        return temp[0].subject.valueOf();
+    }
+    else {
+        return "";
+    }
+}
+/**
+ * @param The FOAF value to get
+ */
 Foaf.prototype._getValue = function (value) {
-    var that = this;
     var temp = this.graph.filter(function(t){ return t.predicate.equals("http://xmlns.com/foaf/0.1/" + value) }).toArray();
     if (temp.length == 1) {
         return temp[0].object.valueOf();
     }
     //TODO: cover the case when 
     else {
-        return ""
+        return "";
     }
 }
-
+/**
+ *
+ */
 var VerificationAgent = function (certificate) {
     this.subjectAltName = certificate.subjectaltname;
     this.modulus = certificate.modulus;
@@ -38,6 +54,9 @@ var VerificationAgent = function (certificate) {
         this.uris[i] = this.uris[i].split("URI:")[1];
     }
 };
+/**
+ *
+ */
 VerificationAgent.prototype.verify = function (callback) {
     this._verify(this.uris, callback);
 };
@@ -70,6 +89,9 @@ VerificationAgent.prototype._verify = function (uris, callback) {
         });
     }
 };
+/**
+ * Cleans input to authorize only Hexadecimal 
+ */
 VerificationAgent.prototype._clean = function (input, pattern) {
     var match = input.match(/[0-9A-Fa-f]+/);
     if (match == null) {
