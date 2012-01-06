@@ -2,6 +2,7 @@
 var url = require('url');
 var http = require('http');
 var request = require('request');
+var _ = require('underscore')._;
 var querystring = require('querystring');
 
 var rdfstore = require('./rdfstore.js');
@@ -14,7 +15,8 @@ Foaf.prototype.parse = function () {
             title: "WebID Sucess !",
             name: this._getValue('name'),
             birthday: this._getValue('birthday'),
-            webid: this._getWebid()
+            webid: this._getWebid(),
+            knows: this._getKnows()
         };
 }
 /**
@@ -28,6 +30,18 @@ Foaf.prototype._getWebid = function() {
     else {
         return "";
     }
+}
+/**
+ * Get knows relation 
+ * @return List of "known" WebID.
+ */
+Foaf.prototype._getKnows = function () { 
+    var temp = this.graph.filter(function(t){ return t.predicate.equals("http://xmlns.com/foaf/0.1/knows") }).toArray();
+    var result = [];
+    _.each(temp, function (elem) {
+        result.push(elem.object);
+    });
+    return result;
 }
 /**
  * @param The FOAF value to get
