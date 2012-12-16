@@ -3,24 +3,33 @@ fs     = require 'fs'
 
 javascripts = {
   'webid' : [
-    'VerificationAgent',
-    'WebID'
+    'WebID',
+    'VerificationAgent'
   ]
 }
 
 task 'build', 'Build applications discribred in javascripts var', ->
+  try
+    fs.mkdirSync 'bin'
+  catch err
+    #do nothing
   for javascript, sources of javascripts
     appContents = new Array
     console.log 'Processing ' + javascript
     for source, index in sources then do (source, index) ->
       console.log '  `- ' + source
       appContents[index] = fs.readFileSync "src/#{source}.coffee", 'utf8'
-    fs.writeFile 'bin/' + javascript + '.coffee', appContents.join('\n\n'), 'utf8', (err) ->
+    file = 'bin/' + javascript + '.coffee'
+    console.log 'writing coffee file:' + file
+    fs.writeFileSync file, appContents.join('\n\n'), 'utf8', (err) ->
       throw err if err
       console.log 'Compiling ' + javascript
-      exec 'coffee --compile bin/' + javascript + '.coffee', (err, stdout, stderr) ->
-        throw err if err
-        console.log stdout + stderr
-        fs.unlink 'bin/' + javascript + '.coffee', (err) ->
-          throw err if err
-          console.log 'Done.'
+    compileAndDelete javascript
+    
+compileAndDelete = (javascript) ->
+  exec 'coffee --compile bin/' + javascript + '.coffee', (err, stdout, stderr) ->
+    console.log stdout + stderr
+    throw err if err
+    fs.unlink 'bin/' + javascript + '.coffee', (err) ->
+      throw err if err
+      console.log 'Done.'
