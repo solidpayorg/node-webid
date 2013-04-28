@@ -4,7 +4,8 @@ fs     = require 'fs'
 javascripts = {
   'webid' : [
     'WebID',
-    'VerificationAgent'
+    'VerificationAgent',
+    'Foaf'
   ]
 }
 
