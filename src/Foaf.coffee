@@ -1,3 +1,5 @@
+_ = require('underscore');
+
 class WebID.Foaf
   constructor: (graph) ->
     @graph = graph
