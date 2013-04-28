@@ -27,7 +27,7 @@ task 'build', 'Build applications discribred in javascripts var', ->
     compileAndDelete javascript
     
 compileAndDelete = (javascript) ->
-  exec 'coffee --compile bin/' + javascript + '.coffee', (err, stdout, stderr) ->
+  exec 'coffee --output . --compile bin/' + javascript + '.coffee ', (err, stdout, stderr) ->
     console.log stdout + stderr
     throw err if err
     fs.unlink 'bin/' + javascript + '.coffee', (err) ->
