@@ -28,18 +28,16 @@ class WebID.VerificationAgent
       url: parsedURI
       method: 'GET'
       headers:
-        #Acording to http://richard.cyganiak.de/blog/2008/03/what-is-your-rdf-browsers-accept-header/
-        Accept: 'application/rdf+xml, application/xhtml+xml;q=0.3, text/xml;q=0.2,application/xml;q=0.2, text/html;q=0.3, text/plain;q=0.1, text/n3,text/rdf+n3;q=0.5, application/x-turtle;q=0.2, text/turtle;q=1'
+        Accept: 'text/turtle, application/ld+json'
     r = request options, (err, res, body) =>
       if err
         error 'profileGet'
       else
-        #type is res.headers['content-type']
-        @verifyWebID uri, body, success, error
+        @verifyWebID uri, body, res.headers['content-type'], success, error
         
-  verifyWebID: (webID, profile, successCB, errorCB) =>
+  verifyWebID: (webID, profile, mimeType, successCB, errorCB) =>
     rdfstore.create (store) =>
-      store.load "text/turtle", profile, (success, results) =>
+      store.load mimeType, profile, (success, results) =>
         if success
           store.execute "PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }", (success, results) =>
             if success
