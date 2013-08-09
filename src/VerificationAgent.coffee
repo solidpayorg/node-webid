@@ -45,22 +45,16 @@ class WebID.VerificationAgent
               exponent = null
               i = 0
               while i < results.length
-                if results[i].webid #and results[i].webid.value is webidUri
+                if results[i].webid.value is webID
                   modulus = results[i].m.value
                   exponent = results[i].e.value
-                i++
-              if modulus? and exponent?
                 # Check if the modulus and exponent are equals
-                if (modulus.toLowerCase() is @modulus.toLowerCase()) and (exponent is @exponent)
+                if modulus? and exponent? and (modulus.toLowerCase() is @modulus.toLowerCase()) and (exponent is @exponent)
                   # Every thing is OK, webid valid
-                  # Transform store to graph
-                  store.node webID, (success, graph) ->
-                    successCB graph
-                else
-                  # The certificate does not identity this FOAF file
-                  errorCB "falseWebID"
-              else
-                errorCB "profileAllKeysWellFormed"
+                  successCB webID
+                  return undefined
+                i++
+              errorCB "profileAllKeysWellFormed"
             else
               errorCB "profileAllKeysWellFormed"
         else
