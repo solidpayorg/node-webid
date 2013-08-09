@@ -1,2 +1,3 @@
-/node_modules
-/bin
+# eclipse project files
+.project
+.settings/*
