@@ -1,3 +1,6 @@
 # eclipse project files
 .project
 .settings/*
+
+# built
+webid.js
