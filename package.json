@@ -1,6 +1,6 @@
 {
     "name": "webid",
-    "version": "0.0.4",
+    "version": "0.1.0",
     "description": "WebID module",
 	"homepage": "https://github.com/magnetik/node-webid",
     "keywords": [
@@ -49,5 +49,5 @@
         "postinstall": "cake build",
         "postupdate": "cake build"
     },
-    "main": "./webid"
+    "main": "./win/webid"
 }

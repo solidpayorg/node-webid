@@ -9,7 +9,7 @@ javascripts = {
   ]
 }
 
-task 'build', 'Build applications discribred in javascripts var', ->
+task 'build', 'Build applications described in javascripts var', ->
   try
     fs.mkdirSync 'bin'
   catch err
@@ -28,7 +28,7 @@ task 'build', 'Build applications discribred in javascripts var', ->
     compileAndDelete javascript
     
 compileAndDelete = (javascript) ->
-  exec 'coffee --output . --compile bin/' + javascript + '.coffee ', (err, stdout, stderr) ->
+  exec 'coffee --output bin/ --compile bin/' + javascript + '.coffee ', (err, stdout, stderr) ->
     console.log stdout + stderr
     throw err if err
     fs.unlink 'bin/' + javascript + '.coffee', (err) ->
