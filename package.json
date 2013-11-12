@@ -49,5 +49,5 @@
         "postinstall": "cake build",
         "postupdate": "cake build"
     },
-    "main": "./win/webid"
+    "main": "./bin/webid"
 }
