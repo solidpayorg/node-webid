@@ -41,18 +41,18 @@ class WebID.VerificationAgent
         if success
           store.execute "PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }", (success, results) =>
             if success
-              modulus = null
-              exponent = null
               i = 0
               while i < results.length
+                modulus = null
+                exponent = null
                 if results[i].webid.value is webID
                   modulus = results[i].m.value
                   exponent = results[i].e.value
-                # Check if the modulus and exponent are equals
-                if modulus? and exponent? and (modulus.toLowerCase() is @modulus.toLowerCase()) and (exponent is @exponent)
-                  # Every thing is OK, webid valid
-                  successCB webID
-                  return undefined
+                  # Check if the modulus and exponent are equals
+                  if modulus? and exponent? and (modulus.toLowerCase() is @modulus.toLowerCase()) and (exponent is @exponent)
+                    # Every thing is OK, webid valid
+                    successCB webID
+                    return undefined
                 i++
               errorCB "profileAllKeysWellFormed"
             else
