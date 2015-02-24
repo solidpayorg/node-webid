@@ -12,7 +12,7 @@ class WebID.VerificationAgent
     @exponent = parseInt(certificate.exponent, 16).toString() # Convert to hex
     @subjectAltName.replace /URI:([^, ]+)/g, (match, uri) =>
       @uris.push uri
-      
+
   verify: (success, error, {}) ->
     @waitFor ?= 0 #wait for all requests
     if @uris.length is 0
@@ -20,10 +20,10 @@ class WebID.VerificationAgent
     else
       uri = @uris.shift()
       @getWebID uri, success, error
-        
+
   getWebID: (uri, success, error) ->
     parsedURI = url.parse(uri)
-    
+
     options =
       url: parsedURI
       method: 'GET'
@@ -34,7 +34,7 @@ class WebID.VerificationAgent
         error 'profileGet'
       else
         @verifyWebID uri, body, res.headers['content-type'], success, error
-        
+
   verifyWebID: (webID, profile, mimeType, successCB, errorCB) =>
     rdfstore.create (store) =>
       store.load mimeType, profile, (success, results) =>
@@ -43,20 +43,17 @@ class WebID.VerificationAgent
             if success
               i = 0
               while i < results.length
-                modulus = null
-                exponent = null
-                if results[i].webid.value is webID
-                  modulus = results[i].m.value
-                  exponent = results[i].e.value
-                  # Check if the modulus and exponent are equals
-                  if modulus? and exponent? and (modulus.toLowerCase() is @modulus.toLowerCase()) and (exponent is @exponent)
-                    # Every thing is OK, webid valid
-                    successCB webID
-                    return undefined
+                modulus = results[i].m.value
+                exponent = results[i].e.value
+                # Check if the modulus and exponent are equals
+                if modulus? and exponent? and (modulus.toLowerCase() is @modulus.toLowerCase()) and (exponent is @exponent)
+                  # Every thing is OK, webid valid
+                  successCB webID
+                  return undefined
                 i++
               errorCB "profileAllKeysWellFormed"
             else
               errorCB "profileAllKeysWellFormed"
         else
-          # Can't load 
-          errorCB "profileWellFormed" 
+          # Can't load
+          errorCB "profileWellFormed"
