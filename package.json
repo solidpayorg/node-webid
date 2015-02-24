@@ -27,7 +27,7 @@
         "type": "MIT"
     }
     ],
-    "repositories": [
+    "repository": [
     {
         "type": "git",
         "url": "git@github.com:magnetik/node-webid.git"
