@@ -45,9 +45,9 @@
         "node" : ">= 0.8.0"
     },
     "scripts": {
-        "pretest": "./node_modules/coffee-script/bin/cake build",
-        "postinstall": "./node_modules/coffee-script/bin/cake build",
-        "postupdate": "./node_modules/coffee-script/bin/cake build"
+        "pretest": "cake build",
+        "postinstall": "cake build",
+        "postupdate": "cake build"
     },
     "main": "./bin/webid"
 }
