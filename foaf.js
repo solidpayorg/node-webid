@@ -39,6 +39,7 @@ Foaf.prototype.getKnows = function() {
 };
 
 Foaf.prototype.getValue = function(value) {
+  console.log(this.graph)
   var temp = this.graph.filter(function(t) {
     return t.predicate.equals("http://xmlns.com/foaf/0.1/" + value);
   }).toArray();
