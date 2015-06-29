@@ -8,7 +8,7 @@ Node.js module with tools to help using WebID (http://www.webid.info).
 
 Just require the module `webid`:
 
-```
+```javascript
 var webid = require('webid');
 ```
 
@@ -22,7 +22,7 @@ Check the project [webid-demo](https://github.com/magnetik/node-webid-demo) to s
 
 Basic usage:
 
-```
+```javascript
 var webid = require('webid');
 var verifAgent = new webid.VerificationAgent(certificate);
 verifAgent.verify(function (err, result) {
