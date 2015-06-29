@@ -25,13 +25,14 @@ Basic usage:
 ```
 var webid = require('webid');
 var verifAgent = new webid.VerificationAgent(certificate);
-	verifAgent.verify(function (result) {
-		//Success! User is identified
-		var foaf = new webid.Foaf(result);
-		req.session.profile = foaf.parse();
-	}, function(result) {
-		//An error occured
-	});
+verifAgent.verify(function (err, result) {
+  if (err) {
+    //An error occurred
+  }
+	//Success! User is identified
+	var foaf = new webid.Foaf(result);
+	req.session.profile = foaf.parse();
+});
 ```
 
 ##Licence

@@ -1,41 +1,49 @@
 {
   "name": "webid",
-  "version": "0.2.0",
   "description": "WebID module",
+  "version": "0.2.0",
+  "author": {
+    "name": "Baptiste Lafontaine",
+    "email": "baptiste33@gmail.com"
+  },
   "homepage": "https://github.com/linkeddata/node-webid",
   "keywords": [
     "webid",
     "w3c",
     "foaf"
   ],
-  "author": {
-    "name": "Baptiste Lafontaine",
-    "email": "baptiste33@gmail.com"
-  },
-  "maintainers": [{
-    "name": "Nicola Greco",
-    "email": "me@nicolagreco.com"
-  }],
-  "contributors": [{
-    "name":  "Baptiste Lafontaine",
-    "email": "baptiste33@gmail.com"
-  }],
+  "maintainers": [
+    {
+      "name": "Nicola Greco",
+      "email": "me@nicolagreco.com"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Baptiste Lafontaine",
+      "email": "baptiste33@gmail.com"
+    }
+  ],
   "bugs": {
     "url": "https://github.com/linkeddata/node-webid/issues"
   },
-  "licenses": [{
-    "type": "MIT"
-  }],
-  "repository": [{
-    "type": "git",
-    "url": "git@github.com:linkeddata/node-webid.git"
-  }],
+  "license": "MIT",
+  "repository": [
+    {
+      "type": "git",
+      "url": "git@github.com:linkeddata/node-webid.git"
+    }
+  ],
   "dependencies": {
-    "request": ">= 2.9.3",
-    "rdfstore": "=0.8.5"
+    "rdfstore": "^0.9.6",
+    "request": "^2.58.0"
   },
-  "engines" : {
-    "node" : ">= 0.8.0"
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha ./test/*.js"
   },
-  "main": "index.js"
+  "devDependencies": {
+    "mocha": "^2.2.5",
+    "rdflib": "^0.2.3"
+  }
 }

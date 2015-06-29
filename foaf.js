@@ -5,7 +5,7 @@ module.exports = Foaf
 
 Foaf.prototype.parse = function() {
   return {
-    title: "WebID Sucess !",
+    title: "WebID Success !",
     name: this.getValue("name"),
     birthday: this.getValue("birthday"),
     webid: this.getWebid(),

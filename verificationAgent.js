@@ -6,6 +6,9 @@ var PREFIX_SPARQL = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webi
 module.exports = VerificationAgent
 
 function VerificationAgent (certificate) {
+  if (!certificate) {
+    throw new Error("missing certificate for WebID verification agent")
+  }
   this.uris = []
   this.subjectAltName = certificate.subjectaltname
   this.modulus = certificate.modulus
