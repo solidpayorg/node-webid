@@ -1,4 +1,6 @@
 var WebID = require('../')
+var chai = require('chai')
+var expect = chai.expect;
 var assert = require('assert')
 
 var validCert = {
@@ -17,26 +19,74 @@ describe('WebID', function () {
 
   describe('Verification Agent', function () {
 
-    it('valid certificate should have a result', function (done) {
-      this.timeout(10000);
-      var agent = new WebID.VerificationAgent(validCert)
-      agent.verify(function (err, result) {
-        assert(!!result)
-        assert(!err)
-        done()
+    describe('verifyKey', function () {
+      it('should fail to verify unhandled profile mimeType-s', function(done) {
+        var agent = new WebID.VerificationAgent(validCert)
+        agent.verifyKey('', 'text/html', function(err, result) {
+          expect(err).to.equal('loadStore')
+          done()
+        })
       })
     })
 
-    it('should throw error certificate is missing or empty', function () {
-      var cert = null
-      assert.throws(function () {
-        var agent = new WebID.VerificationAgent(cert)
-      }, Error)
+    describe('verify', function() {
+      it('valid certificate should have a result', function (done) {
+        this.timeout(10000);
+        var agent = new WebID.VerificationAgent(validCert)
+        agent.verify(function (err, result) {
+          expect(err).to.not.exist
+          expect(result).to.exist
+          done()
+        })
+      })
 
-      var cert = {}
-      assert.throws(function () {
+      it('should reject a webID uri not found', function(done) {
+        var cert = {
+          subjectaltname: 'URI:https://example.com/profile/card#me',
+          modulus: validCert.modulus,
+          exponent: validCert.exponent
+        }
         var agent = new WebID.VerificationAgent(cert)
-      }, Error)
+        agent.verify(function(err, result) {
+          expect(err).to.equal('failedToRetrieveWebID')
+          done()
+        })
+      })
+
+      it('should reject a certificate that does not match exponent or modulus', function(done) {
+        var cert_invalid_exponent = {
+          subjectaltname: validCert.subjectaltname,
+          modulus: validCert.modulus,
+          exponent: '10101' // invalid exponent
+        }
+        var cert_invalid_modulus = {
+          subjectaltname: validCert.subjectaltname,
+          modulus: validCert.modulus.substr(0, validCert.modulus.length-1) + 'A', // invalid modulus
+          exponent: validCert.exponent
+        }
+        var agent_exponent = new WebID.VerificationAgent(cert_invalid_exponent)
+        var agent_modulus = new WebID.VerificationAgent(cert_invalid_modulus)
+        agent_exponent.verify(function (err, result) {
+          expect(err).to.equal('profileAllKeysWellFormed')
+
+          agent_modulus.verify(function(err, result) {
+            expect(err).to.equal('profileAllKeysWellFormed')
+            done()
+          })
+        })
+      })
+
+      it('should throw error certificate is missing or empty', function () {
+        var cert = null
+        assert.throws(function () {
+          var agent = new WebID.VerificationAgent(cert)
+        }, Error)
+
+        var cert = {}
+        assert.throws(function () {
+          var agent = new WebID.VerificationAgent(cert)
+        }, Error)
+      })
     })
   })
 })

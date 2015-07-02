@@ -26,7 +26,19 @@ VerificationAgent.prototype.verify = function (callback) {
   }
 
   var uri = this.uris.shift()
-  this.getWebID(uri, callback)
+  var that = this
+  this.getWebID(uri, function(err, uri, body, headers) {
+    if (err) {
+      return callback(err)
+    }
+
+    that.verifyKey(body, headers, function(err, success) {
+      if (err) {
+        return callback(err)
+      }
+      callback(null, uri)
+    })
+  })
 }
 
 VerificationAgent.prototype.getWebID = function (uri, callback) {
@@ -38,17 +50,19 @@ VerificationAgent.prototype.getWebID = function (uri, callback) {
       'Accept': 'text/turtle, application/ld+json'
     }
   }
-  var that = this
 
   request(options, function (err, res, body) {
     if (err) {
       return callback('profileGet')
     }
-    that.verifyWebID(uri, body, res.headers['content-type'], callback)
+    if (res.statusCode != 200) {
+      return callback('failedToRetrieveWebID')
+    }
+    callback(null, uri, body, res.headers['content-type'])
   })
 }
 
-VerificationAgent.prototype.verifyWebID = function(webID, profile, mimeType, callback) {
+VerificationAgent.prototype.verifyKey = function(profile, mimeType, callback) {
   var that = this
   rdfstore.create(function (err, store) {
     if (err) {
@@ -74,7 +88,7 @@ VerificationAgent.prototype.verifyWebID = function(webID, profile, mimeType, cal
               exponent != null &&
               (modulus.toLowerCase() === that.modulus.toLowerCase()) &&
               exponent === that.exponent) {
-            return callback(null, webID)
+            return callback(null, true)
           }
           i++
         }
