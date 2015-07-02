@@ -27,7 +27,6 @@ describe('WebID', function () {
       })
     })
 
-
     it('should throw error certificate is missing or empty', function () {
       var cert = null
       assert.throws(function () {
@@ -39,7 +38,5 @@ describe('WebID', function () {
         var agent = new WebID.VerificationAgent(cert)
       }, Error)
     })
-
-
   })
 })
