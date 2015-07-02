@@ -10,7 +10,7 @@ $ npm install webid --save
 
 ## Features
 
-- [x] Retrieve a webID ()
+- [x] Retrieve a webID
   ```
 webid.get(uri, callback)
   ```

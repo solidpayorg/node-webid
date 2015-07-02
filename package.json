@@ -35,7 +35,7 @@
     }
   ],
   "dependencies": {
-    "rdfstore": "git://github.com/nicola/rdfstore-js.git#patch-1",
+    "rdflib": "^0.2.6",
     "request": "^2.58.0"
   },
   "main": "index.js",

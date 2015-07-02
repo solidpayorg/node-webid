@@ -22,21 +22,25 @@ describe('WebID', function () {
     describe('verifyKey', function () {
       it('should fail to verify unhandled profile mimeType-s', function(done) {
         var agent = new WebID.VerificationAgent(validCert)
-        agent.verifyKey('', 'text/html', function(err, result) {
-          expect(err).to.equal('loadStore')
-          done()
-        })
+        agent.verifyKey(
+            'https://test_nicola.databox.me/profile/card#me',
+            '',
+            'text/html',
+            function(err, result) {
+              expect(err).to.equal('loadStore')
+              done()
+            })
       })
     })
 
     describe('verify', function() {
       this.timeout(10000);
 
-      it('valid certificate should have a result', function (done) {
+      it('valid certificate should have a uri as result', function (done) {
         var agent = new WebID.VerificationAgent(validCert)
         agent.verify(function (err, result) {
           expect(err).to.not.exist
-          expect(result).to.exist
+          expect(result).to.equal('https://test_nicola.databox.me/profile/card#me')
           done()
         })
       })

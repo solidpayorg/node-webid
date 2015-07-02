@@ -1,6 +1,6 @@
 var request = require('request')
 var url = require('url')
-var rdfstore = require('rdfstore')
+var $rdf = require('rdflib')
 var PREFIX_SPARQL = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }'
 
 exports.VerificationAgent = VerificationAgent
@@ -11,6 +11,7 @@ function VerificationAgent (certificate) {
   if (!certificate) {
     throw new Error('missing certificate for WebID verification agent')
   }
+
   this.uris = []
   this.subjectAltName = certificate.subjectaltname
   this.modulus = certificate.modulus
@@ -34,7 +35,7 @@ VerificationAgent.prototype.verify = function (callback) {
       return callback(err)
     }
 
-    that.verifyKey(body, headers, function(err, success) {
+    that.verifyKey(uri, body, headers, function(err, success) {
       if (err) {
         return callback(err)
       }
@@ -43,39 +44,50 @@ VerificationAgent.prototype.verify = function (callback) {
   })
 }
 
-VerificationAgent.prototype.verifyKey = function(profile, mimeType, callback) {
+function parse (profile, graph, uri, mimeType, callback) {
+  try {
+    $rdf.parse(profile, graph, uri, mimeType)
+    return callback(null, graph)
+  } catch(e) {
+    return callback('loadStore')
+  }
+}
+
+VerificationAgent.prototype.verifyKey = function (uri, profile, mimeType, callback) {
+  var graph = new $rdf.graph()
+  var cert = $rdf.sym('http://www.w3.org/ns/auth/cert#key')
+  var found = false
   var that = this
-  rdfstore.create(function (err, store) {
+
+  parse(profile, graph, uri, mimeType, function (err) {
     if (err) {
-      return callback('createRDFStore')
+      return callback(err)
     }
 
-    store.load(mimeType, profile, function(err, loaded) {
-      if (err) {
-        return callback('loadStore')
-      }
-      if (!loaded) {
-        return callback('profileWellFormed');
-      }
-      store.execute(PREFIX_SPARQL, function(err, results) {
-        if (err) {
-          return callback('profileAllKeysWellFormed');
+    var query = $rdf.SPARQLToQuery(PREFIX_SPARQL, undefined, graph)
+    graph.query(
+      query,
+      function (result){
+        if (found) {
+          return
         }
-        var i = 0
-        while (i < results.length) {
-          var modulus = results[i].m.value
-          var exponent = results[i].e.value
-          if (modulus != null &&
-              exponent != null &&
-              (modulus.toLowerCase() === that.modulus.toLowerCase()) &&
-              exponent === that.exponent) {
-            return callback(null, true)
-          }
-          i++
+        var modulus = result['?m'].value
+        var exponent = result['?e'].value
+        if (modulus != null &&
+           exponent != null &&
+           (modulus.toLowerCase() === that.modulus.toLowerCase()) &&
+           exponent === that.exponent) {
+          found = true
         }
-        return callback('profileAllKeysWellFormed');
-      })
-    })
+      },
+      undefined, // testing
+      function () {
+        if (!found) {
+          return callback('profileAllKeysWellFormed')
+        }
+        return callback(null, true)
+      }
+    )
   })
 }
 
