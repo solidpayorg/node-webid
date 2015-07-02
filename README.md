@@ -30,8 +30,6 @@ verifAgent.verify(function (err, result) {
     //An error occurred
   }
   //Success! User is identified
-  var foaf = new webid.Foaf(result);
-  req.session.profile = foaf.parse();
 });
 ```
 

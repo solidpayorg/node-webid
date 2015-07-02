@@ -30,8 +30,9 @@ describe('WebID', function () {
     })
 
     describe('verify', function() {
+      this.timeout(10000);
+
       it('valid certificate should have a result', function (done) {
-        this.timeout(10000);
         var agent = new WebID.VerificationAgent(validCert)
         agent.verify(function (err, result) {
           expect(err).to.not.exist
