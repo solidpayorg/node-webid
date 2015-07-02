@@ -35,7 +35,7 @@
     }
   ],
   "dependencies": {
-    "rdfstore": "^0.9.6",
+    "rdfstore": "git://github.com/nicola/rdfstore-js.git#patch-1",
     "request": "^2.58.0"
   },
   "main": "index.js",
@@ -43,7 +43,6 @@
     "test": "./node_modules/mocha/bin/mocha ./test/*.js"
   },
   "devDependencies": {
-    "mocha": "^2.2.5",
-    "rdflib": "^0.2.3"
+    "mocha": "^2.2.5"
   }
 }

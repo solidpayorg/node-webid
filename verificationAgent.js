@@ -40,9 +40,7 @@ VerificationAgent.prototype.getWebID = function (uri, callback) {
   }
   var that = this
 
-  console.log("req", options)
   request(options, function (err, res, body) {
-    console.log('preq')
     if (err) {
       return callback('profileGet')
     }
@@ -51,26 +49,20 @@ VerificationAgent.prototype.getWebID = function (uri, callback) {
 }
 
 VerificationAgent.prototype.verifyWebID = function(webID, profile, mimeType, callback) {
-
   var that = this
   rdfstore.create(function (err, store) {
-    console.log('rdfstore', err, store)
     if (err) {
-      return callback('internalError')
+      return callback('createRDFStore')
     }
 
     store.load(mimeType, profile, function(err, loaded) {
       if (err) {
-        return callback('internalError')
+        return callback('loadStore')
       }
-      if (loaded) {
+      if (!loaded) {
         return callback('profileWellFormed');
       }
-      console.log(mimeType, profile)
-      console.log('loaded', loaded, store)
       store.execute(PREFIX_SPARQL, function(err, results) {
-        console.log("the results", results)
-        // console.log(results, webID, profile)
         if (err) {
           return callback('profileAllKeysWellFormed');
         }
