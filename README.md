@@ -1,6 +1,6 @@
 # node-webid
 
-[![Build Status](https://travis-ci.org/linkeddata/node-webid.svg?branch=master)](https://travis-ci.org/linkeddata/ldnode)
+[![Build Status](https://travis-ci.org/linkeddata/node-webid.svg?branch=master)](https://travis-ci.org/linkeddata/node-webid)
 
 Node.js module with tools to help using WebID (http://www.webid.info).
 
