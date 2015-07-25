@@ -99,7 +99,7 @@ describe('WebID', function () {
         })
       })
 
-      it('should report certificateProvidedSAN if only `URI:` is present', function (done) {
+      it('should report missingModulus if only `URI:` is present', function (done) {
         var cert_only_uri = {
           subjectaltname: validCert.subjectaltname
         }
