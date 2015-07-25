@@ -8,33 +8,38 @@ exports.get = get
 exports.verify = verify
 
 function VerificationAgent (certificate) {
-  if (!certificate) {
-    throw new Error('missing certificate for WebID verification agent')
+  this.certificate = certificate || {}
+}
+
+VerificationAgent.prototype.getURIs = function () {
+  var uris = []
+  if (this.certificate.subjectaltname) {
+    this.certificate.subjectaltname.replace(/URI:([^, ]+)/g, function (match, uri) {
+      return uris.push(uri);
+    })
   }
-
-  this.uris = []
-  this.subjectAltName = certificate.subjectaltname
-  this.modulus = certificate.modulus
-  this.exponent = parseInt(certificate.exponent, 16).toString() // hex
-
-  var that = this
-  this.subjectAltName.replace(/URI:([^, ]+)/g, function (match, uri) {
-    return that.uris.push(uri);
-  })
+  return uris;
 }
 
 VerificationAgent.prototype.verify = function (callback) {
-  if (this.uris.length === 0) {
+  var that = this
+
+  // Collect URIs in certificate
+  var uris = that.getURIs()
+
+  // No uris
+  if (uris.length === 0) {
     return callback('certificateProvidedSAN')
   }
 
-  var uri = this.uris.shift()
-  var that = this
+  // Get first URI
+  var uri = uris.shift()
   get(uri, function(err, body, headers) {
     if (err) {
       return callback(err)
     }
 
+    // Verify Key
     that.verifyKey(uri, body, headers, function(err, success) {
       if (err) {
         return callback(err)
@@ -44,26 +49,25 @@ VerificationAgent.prototype.verify = function (callback) {
   })
 }
 
-function parse (profile, graph, uri, mimeType, callback) {
-  try {
-    $rdf.parse(profile, graph, uri, mimeType)
-    return callback(null, graph)
-  } catch(e) {
-    return callback('loadStore')
-  }
-}
-
 VerificationAgent.prototype.verifyKey = function (uri, profile, mimeType, callback) {
+  var that = this
   var graph = new $rdf.graph()
   var cert = $rdf.sym('http://www.w3.org/ns/auth/cert#key')
   var found = false
-  var that = this
+
+  if (!that.certificate.modulus)
+    return callback('missingModulus');
+
+  if  (!that.certificate.exponent) {
+    return callback('missingExponent');
+  }
 
   parse(profile, graph, uri, mimeType, function (err) {
     if (err) {
       return callback(err)
     }
 
+    var certExponent = parseInt(that.certificate.exponent, 16).toString()
     var query = $rdf.SPARQLToQuery(PREFIX_SPARQL, undefined, graph)
     graph.query(
       query,
@@ -73,10 +77,11 @@ VerificationAgent.prototype.verifyKey = function (uri, profile, mimeType, callba
         }
         var modulus = result['?m'].value
         var exponent = result['?e'].value
+
         if (modulus != null &&
            exponent != null &&
-           (modulus.toLowerCase() === that.modulus.toLowerCase()) &&
-           exponent === that.exponent) {
+           (modulus.toLowerCase() === that.certificate.modulus.toLowerCase()) &&
+           exponent === certExponent) {
           found = true
         }
       },
@@ -89,6 +94,15 @@ VerificationAgent.prototype.verifyKey = function (uri, profile, mimeType, callba
       }
     )
   })
+}
+
+function parse (profile, graph, uri, mimeType, callback) {
+  try {
+    $rdf.parse(profile, graph, uri, mimeType)
+    return callback(null, graph)
+  } catch(e) {
+    return callback('loadStore')
+  }
 }
 
 function verify (certificate, callback) {
@@ -116,4 +130,3 @@ function get (uri, callback) {
     callback(null, body, res.headers['content-type'])
   })
 }
-

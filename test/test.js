@@ -81,16 +81,33 @@ describe('WebID', function () {
         })
       })
 
-      it('should throw error certificate is missing or empty', function () {
+      it('should report certificateProvidedSAN if certificate is missing', function (done) {
         var cert = null
-        assert.throws(function () {
-          var agent = new WebID.VerificationAgent(cert)
-        }, Error)
+        var agent = new WebID.VerificationAgent(cert)
+        agent.verify(function(err, result) {
+          expect(err).to.equal('certificateProvidedSAN')
+          done()
+        })
+      })
 
+      it('should report certificateProvidedSAN if certificate is empty', function (done) {
         var cert = {}
-        assert.throws(function () {
-          var agent = new WebID.VerificationAgent(cert)
-        }, Error)
+        var agent = new WebID.VerificationAgent(cert)
+        agent.verify(function(err, result) {
+          expect(err).to.equal('certificateProvidedSAN')
+          done()
+        })
+      })
+
+      it('should report certificateProvidedSAN if only `URI:` is present', function (done) {
+        var cert_only_uri = {
+          subjectaltname: validCert.subjectaltname
+        }
+        var agent = new WebID.VerificationAgent(cert_only_uri)
+        agent.verify(function(err, result) {
+          expect(err).to.equal('missingModulus')
+          done()
+        })
       })
     })
   })
