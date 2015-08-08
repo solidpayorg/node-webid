@@ -1,3 +1,4 @@
+'use strict';
 var request = require('request');
 var url = require('url');
 var $rdf = require('rdflib');
@@ -91,7 +92,7 @@ VerificationAgent.prototype.verifyKey = function (uri, profile, mimeType, callba
           return callback('Certificate public key not found in the user\'s profile');
         }
         return callback(null, true);
-      };
+      }
     )
   });
 };
@@ -122,10 +123,10 @@ function get (uri, callback) {
 
   request(options, function (err, res, body) {
     if (err) {
-      return callback('Error fetch profile from '+parsedURI+': '+err);
+      return callback('Error fetch profile from '+parsedURI.href+': '+err);
     }
     if (res.statusCode != 200) {
-      return callback('Failed to retrieve WebID from '+parsedURI+': HTTP '+res.statusCode);
+      return callback('Failed to retrieve WebID from '+parsedURI.href+': HTTP '+res.statusCode);
     }
     callback(null, body, res.headers['content-type']);
   })

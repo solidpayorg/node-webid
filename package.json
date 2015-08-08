@@ -1,7 +1,7 @@
 {
   "name": "webid",
   "description": "WebID module",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "author": {
     "name": "Baptiste Lafontaine",
     "email": "baptiste33@gmail.com"
@@ -22,6 +22,10 @@
     {
       "name": "Baptiste Lafontaine",
       "email": "baptiste33@gmail.com"
+    },
+    {
+      "name": "Andrei Sambra",
+      "email": "andrei@fcns.eu"
     }
   ],
   "bugs": {

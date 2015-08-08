@@ -27,7 +27,7 @@ describe('WebID', function () {
             '',
             'text/html',
             function(err, result) {
-              expect(err).to.equal('loadStore')
+              expect(err).to.equal('Cound not load/parse profile data')
               done()
             })
       })
@@ -53,7 +53,7 @@ describe('WebID', function () {
         }
         var agent = new WebID.VerificationAgent(cert)
         agent.verify(function(err, result) {
-          expect(err).to.equal('failedToRetrieveWebID')
+          expect(err).to.equal('Failed to retrieve WebID from https://example.com/profile/card#me: HTTP 404')
           done()
         })
       })
@@ -72,10 +72,10 @@ describe('WebID', function () {
         var agent_exponent = new WebID.VerificationAgent(cert_invalid_exponent)
         var agent_modulus = new WebID.VerificationAgent(cert_invalid_modulus)
         agent_exponent.verify(function (err, result) {
-          expect(err).to.equal('profileAllKeysWellFormed')
+          expect(err).to.equal('Certificate public key not found in the user\'s profile')
 
           agent_modulus.verify(function(err, result) {
-            expect(err).to.equal('profileAllKeysWellFormed')
+            expect(err).to.equal('Certificate public key not found in the user\'s profile')
             done()
           })
         })
@@ -85,7 +85,7 @@ describe('WebID', function () {
         var cert = null
         var agent = new WebID.VerificationAgent(cert)
         agent.verify(function(err, result) {
-          expect(err).to.equal('certificateProvidedSAN')
+          expect(err).to.equal('Empty Subject Alternative Name field in certificate')
           done()
         })
       })
@@ -94,7 +94,7 @@ describe('WebID', function () {
         var cert = {}
         var agent = new WebID.VerificationAgent(cert)
         agent.verify(function(err, result) {
-          expect(err).to.equal('certificateProvidedSAN')
+          expect(err).to.equal('Empty Subject Alternative Name field in certificate')
           done()
         })
       })
@@ -105,7 +105,7 @@ describe('WebID', function () {
         }
         var agent = new WebID.VerificationAgent(cert_only_uri)
         agent.verify(function(err, result) {
-          expect(err).to.equal('missingModulus')
+          expect(err).to.equal('Missing modulus value in client certificate')
           done()
         })
       })
