@@ -17,6 +17,7 @@ $ npm install webid --save
 
 - [x] Retrieve a WebID
 - [x] Verify a WebID+TLS
+- [ ] Generate a WebID+TLS
 
 
 ## Usage
