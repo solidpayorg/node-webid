@@ -32,6 +32,10 @@ webid.verify(certificate, function (err, result) {
 });
 ```
 
+## History
+
+Originally forked from [magnetik/node-webid](https://github.com/magnetik/node-webid)
+
 ## License
 
 MIT
