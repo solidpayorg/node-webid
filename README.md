@@ -23,8 +23,8 @@ $ npm install webid --save
 ## Usage
 
 ```javascript
-var webid = require('webid');
-webid.verify(certificate, function (err, result) {
+var webid = require('webid')('tls');
+webid(certificate, function (err, result) {
   if (err) {
     //An error occurred
   }
