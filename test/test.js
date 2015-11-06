@@ -35,7 +35,7 @@ describe('WebID', function () {
       this.timeout(10000)
 
       it('valid certificate should have a uri as result', function (done) {
-        tls(validCert, function (err, result) {
+        tls.verify(validCert, function (err, result) {
           expect(err).to.not.exist
           expect(result).to.equal('https://test_nicola.databox.me/profile/card#me')
           done()
@@ -48,7 +48,7 @@ describe('WebID', function () {
           modulus: validCert.modulus,
           exponent: validCert.exponent
         }
-        tls(cert, function (err, result) {
+        tls.verify(cert, function (err, result) {
           expect(err.message).to.equal('Failed to retrieve WebID from https://example.com/profile/card#me: HTTP 404')
           done()
         })
@@ -66,10 +66,10 @@ describe('WebID', function () {
           exponent: validCert.exponent
         }
 
-        tls(cert_invalid_exponent, function (err, result) {
+        tls.verify(cert_invalid_exponent, function (err, result) {
           expect(err.message).to.equal('Certificate public key not found in the user\'s profile')
 
-          tls(cert_invalid_modulus, function (err, result) {
+          tls.verify(cert_invalid_modulus, function (err, result) {
             expect(err.message).to.equal('Certificate public key not found in the user\'s profile')
             done()
           })
@@ -78,7 +78,7 @@ describe('WebID', function () {
 
       it('should report certificateProvidedSAN if certificate is missing', function (done) {
         var cert = null
-        tls(cert, function (err, result) {
+        tls.verify(cert, function (err, result) {
           expect(err.message).to.equal('Empty Subject Alternative Name field in certificate')
           done()
         })
@@ -86,7 +86,7 @@ describe('WebID', function () {
 
       it('should report certificateProvidedSAN if certificate is empty', function (done) {
         var cert = {}
-        tls(cert, function (err, result) {
+        tls.verify(cert, function (err, result) {
           expect(err.message).to.equal('Empty Subject Alternative Name field in certificate')
           done()
         })
@@ -97,7 +97,7 @@ describe('WebID', function () {
           subjectaltname: validCert.subjectaltname
         }
 
-        tls(cert_only_uri, function (err, result) {
+        tls.verify(cert_only_uri, function (err, result) {
           expect(err.message).to.equal('Missing modulus value in client certificate')
           done()
         })
