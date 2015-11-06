@@ -1,7 +1,7 @@
-var WebID = require('../')
+var webid = require('../')
+var tls = require('../tls')
 var chai = require('chai')
-var expect = chai.expect;
-var assert = require('assert')
+var expect = chai.expect
 
 var validCert = {
   subject: { O: 'WebID', CN: 'Nicola Greco (test) [on test_nicola.databox.me]' },
@@ -16,44 +16,40 @@ var validCert = {
 }
 
 describe('WebID', function () {
-
-  describe('Verification Agent', function () {
-
+  describe('TLS', function () {
     describe('verifyKey', function () {
-      it('should fail to verify unhandled profile mimeType-s', function(done) {
-        var agent = new WebID.VerificationAgent(validCert)
-        agent.verifyKey(
+      it('should fail to verify unhandled profile mimeType-s', function (done) {
+        tls.verifyKey(
+            validCert,
             'https://test_nicola.databox.me/profile/card#me',
             '',
             'text/html',
-            function(err, result) {
+            function (err, result) {
               expect(err).to.equal('Cound not load/parse profile data')
               done()
             })
       })
     })
 
-    describe('verify', function() {
-      this.timeout(10000);
+    describe('verify', function () {
+      this.timeout(10000)
 
       it('valid certificate should have a uri as result', function (done) {
-        var agent = new WebID.VerificationAgent(validCert)
-        agent.verify(function (err, result) {
+        tls(validCert, function (err, result) {
           expect(err).to.not.exist
           expect(result).to.equal('https://test_nicola.databox.me/profile/card#me')
           done()
         })
       })
 
-      it('should reject a webID uri not found', function(done) {
+      it('should reject a webID uri not found', function (done) {
         var cert = {
           subjectaltname: 'URI:https://example.com/profile/card#me',
           modulus: validCert.modulus,
           exponent: validCert.exponent
         }
-        var agent = new WebID.VerificationAgent(cert)
-        agent.verify(function(err, result) {
-          expect(err).to.equal('Failed to retrieve WebID from https://example.com/profile/card#me: HTTP 404')
+        tls(cert, function (err, result) {
+          expect(err.message).to.equal('Failed to retrieve WebID from https://example.com/profile/card#me: HTTP 404')
           done()
         })
       })
@@ -66,16 +62,15 @@ describe('WebID', function () {
         }
         var cert_invalid_modulus = {
           subjectaltname: validCert.subjectaltname,
-          modulus: validCert.modulus.substr(0, validCert.modulus.length-1) + 'A', // invalid modulus
+          modulus: validCert.modulus.substr(0, validCert.modulus.length - 1) + 'A', // invalid modulus
           exponent: validCert.exponent
         }
-        var agent_exponent = new WebID.VerificationAgent(cert_invalid_exponent)
-        var agent_modulus = new WebID.VerificationAgent(cert_invalid_modulus)
-        agent_exponent.verify(function (err, result) {
-          expect(err).to.equal('Certificate public key not found in the user\'s profile')
 
-          agent_modulus.verify(function(err, result) {
-            expect(err).to.equal('Certificate public key not found in the user\'s profile')
+        tls(cert_invalid_exponent, function (err, result) {
+          expect(err.message).to.equal('Certificate public key not found in the user\'s profile')
+
+          tls(cert_invalid_modulus, function (err, result) {
+            expect(err.message).to.equal('Certificate public key not found in the user\'s profile')
             done()
           })
         })
@@ -83,18 +78,16 @@ describe('WebID', function () {
 
       it('should report certificateProvidedSAN if certificate is missing', function (done) {
         var cert = null
-        var agent = new WebID.VerificationAgent(cert)
-        agent.verify(function(err, result) {
-          expect(err).to.equal('Empty Subject Alternative Name field in certificate')
+        tls(cert, function (err, result) {
+          expect(err.message).to.equal('Empty Subject Alternative Name field in certificate')
           done()
         })
       })
 
       it('should report certificateProvidedSAN if certificate is empty', function (done) {
         var cert = {}
-        var agent = new WebID.VerificationAgent(cert)
-        agent.verify(function(err, result) {
-          expect(err).to.equal('Empty Subject Alternative Name field in certificate')
+        tls(cert, function (err, result) {
+          expect(err.message).to.equal('Empty Subject Alternative Name field in certificate')
           done()
         })
       })
@@ -103,9 +96,9 @@ describe('WebID', function () {
         var cert_only_uri = {
           subjectaltname: validCert.subjectaltname
         }
-        var agent = new WebID.VerificationAgent(cert_only_uri)
-        agent.verify(function(err, result) {
-          expect(err).to.equal('Missing modulus value in client certificate')
+
+        tls(cert_only_uri, function (err, result) {
+          expect(err.message).to.equal('Missing modulus value in client certificate')
           done()
         })
       })
