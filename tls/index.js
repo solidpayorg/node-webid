@@ -8,6 +8,11 @@ var Graph = $rdf.graph
 var SPARQL_QUERY = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }'
 
 function verify (certificate, callback) {
+
+  if (!certificate) {
+    return callback(new Error('No certificate given'))
+  }
+
   // Collect URIs in certificate
   var uris = getUris(certificate)
 
@@ -25,10 +30,7 @@ function verify (certificate, callback) {
 
     // Verify Key
     verifyKey(certificate, uri, body, headers, function (err, success) {
-      if (err) {
-        return callback(err)
-      }
-      callback(null, uri)
+      return callback(err, uri)
     })
   })
 }
@@ -43,7 +45,6 @@ function getUris (certificate) {
         return uris.push(uri)
       })
   }
-
   return uris
 }
 
@@ -63,7 +64,7 @@ function verifyKey (certificate, uri, profile, mimeType, callback) {
     if (err) {
       return callback(err)
     }
-
+    console
     var certExponent = parseInt(certificate.exponent, 16).toString()
     var query = $rdf.SPARQLToQuery(SPARQL_QUERY, undefined, graph)
     graph.query(

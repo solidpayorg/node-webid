@@ -79,7 +79,7 @@ describe('WebID', function () {
       it('should report certificateProvidedSAN if certificate is missing', function (done) {
         var cert = null
         tls.verify(cert, function (err, result) {
-          expect(err.message).to.equal('Empty Subject Alternative Name field in certificate')
+          expect(err.message).to.equal('No certificate given')
           done()
         })
       })
