@@ -97,7 +97,7 @@ describe('WebID', function () {
           subjectaltname: validCert.subjectaltname
         }
 
-        tls.verify(cert_only_uri, function (err, result) {
+        webid('tls').verify(cert_only_uri, function (err, result) {
           expect(err.message).to.equal('Missing modulus value in client certificate')
           done()
         })

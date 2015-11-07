@@ -1,4 +1,4 @@
-exports.webid = webid
+module.exports = webid
 
 var tls = require('./tls')
 
