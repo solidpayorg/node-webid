@@ -24,7 +24,7 @@ $ npm install webid --save
 
 ```javascript
 var webid = require('webid')('tls');
-webid(certificate, function (err, result) {
+webid.verify(certificate, function (err, result) {
   if (err) {
     //An error occurred
   }
