@@ -32,6 +32,18 @@ webid(certificate, function (err, result) {
 });
 ```
 
+## Abstract API
+
+**Work in progress**
+
+```javascript
+// Let's consider we are going to use `a` webid strategy: tls
+var webid = require('webid')('tls')
+
+webid.verify(challenge, cb) // in this case the certificate
+webid.generate(uri, cb)
+```
+
 ## History
 
 Originally forked from [magnetik/node-webid](https://github.com/magnetik/node-webid)
