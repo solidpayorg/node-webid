@@ -4,6 +4,7 @@ exports.verifyKey = verifyKey
 var $rdf = require('rdflib')
 var get = require('../lib/get')
 var parse = require('../lib/parse')
+var pem = require('pem')
 var Graph = $rdf.graph
 var SPARQL_QUERY = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }'
 
@@ -92,4 +93,50 @@ function verifyKey (certificate, uri, profile, mimeType, callback) {
       }
     )
   })
+}
+
+/*
+Generate a webid cert.
+options should have the uri of the profile in it.
+
+callback(err, certificate)
+*/
+function generate(options, callback) {
+    if (!options.uri) {
+        return callback(new Error('No profile uri found'))
+    }
+
+    // Maybe we need to validate the uri first?
+
+    // If we are here then the options has the uri
+    // prepare the options for csr
+    var csr_options = {
+        keyBitSize: options.keySize || 2048,
+        altNames: [
+            options.uri
+        ],
+        selfSigned: true // Self sign for now
+    }
+
+    var csr = pem.createCsr(csr_options, function (err, csr) {
+        if (err) {
+            console.log('Error: ' + err.message)
+            throw err
+        }
+        return csr
+    })
+
+    var cert_options = {
+        csr: this.csr,
+        days: 999
+    }
+
+    var cert = pem.createCertificate(cert_options, function (err, cert) {
+        if (err) {
+            console.log('Error: ' + err.message)
+            throw err
+        }
+        return cert.certificate
+    })
+
 }
