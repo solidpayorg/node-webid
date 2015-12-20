@@ -103,5 +103,23 @@ describe('WebID', function () {
         })
       })
     })
+
+    describe('generate', function () {
+      it('should create a valid certificate', function (done) {
+        tls.generate({
+          //clientKey: 'b87add8bfccc63da5dd3f0e5c29b895a6021ab85110d23776c2c2263aacee8ab53acb113408f725e89c646a8b46561b71205654d77afc9bf3d2a9859bae0c3f5887ad918e9d78541358b53417a3102739d80a74c16047830114919812e5b5fbe6c2c246c2c19ed85ac91f6edb4f8dc304b04cb2d038136a9e5251c143dc9076acbe31feb54dcff4b141aeb9f2b0be165491a1c97378c41089e3b9df7e1736fcb17dc67159422420d7e5342d636bb771212bdcdbc84fcb2c9b6b65d39473f642b0a3e43abd393412303737a386c20a9372f130a1b8b6037aa59f262bacb5dfeddb9ba748f7842dd1fb65fec1380e6319c0c7b50c033f481e505fc2f3dd47e5b5f',
+          keySize: 1024,
+          uri: 'URI: https://corysabol.databox.me/profile/card#me'
+        },
+        function (err, cert) {
+          expect(err).to.not.exist
+          tls.verify(cert, function (err, result) {
+            expect(err).to.not.exist
+            expect(result).to.equal('https://corysabol.databox.me/profile/card#me')
+          })
+        })
+        done()
+      })
+    })
   })
 })
