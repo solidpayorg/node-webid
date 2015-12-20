@@ -1,5 +1,6 @@
 exports.verify = verify
 exports.verifyKey = verifyKey
+exports.generate = generate
 
 var $rdf = require('rdflib')
 var get = require('../lib/get')
@@ -111,14 +112,15 @@ function generate(options, callback) {
     // If we are here then the options has the uri
     // prepare the options for csr
     var csr_options = {
+        clientKey: options.clientKey, // We need the clients pub key for this, <keygen>?
         keyBitSize: options.keySize || 2048,
         altNames: [
-            options.uri
+            'URI: ' + options.uri
         ],
         selfSigned: true // Self sign for now
     }
 
-    var csr = pem.createCsr(csr_options, function (err, csr) {
+    var csr = pem.createCSR(csr_options, function (err, csr) {
         if (err) {
             console.log('Error: ' + err.message)
             throw err
@@ -131,12 +133,22 @@ function generate(options, callback) {
         days: 999
     }
 
-    var cert = pem.createCertificate(cert_options, function (err, cert) {
+    var cert = pem.createCertificate(cert_options, function (err, result) {
         if (err) {
             console.log('Error: ' + err.message)
             throw err
         }
-        return cert.certificate
+        console.log(result)
+        return result.certificate
     })
+
+    // Verify the cert once it's created
+    // verify(cert, function (err, result) {
+    //     if (err) {
+    //         console.log('Error: ' + err.message)
+    //         throw err
+    //     }
+    //     // Do something with result
+    // })
 
 }
