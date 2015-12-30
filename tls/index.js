@@ -1,4 +1,5 @@
 exports.verify = verify
+exports.generate = generate
 exports.verifyKey = verifyKey
 
 var $rdf = require('rdflib')
@@ -6,6 +7,10 @@ var get = require('../lib/get')
 var parse = require('../lib/parse')
 var Graph = $rdf.graph
 var SPARQL_QUERY = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }'
+
+function generate (spkac, agent, callback) {
+  callback(null, false)
+}
 
 function verify (certificate, callback) {
 
