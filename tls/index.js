@@ -5,7 +5,8 @@ exports.generate = generate
 var $rdf = require('rdflib')
 var get = require('../lib/get')
 var parse = require('../lib/parse')
-var pem = require('pem')
+var forge = require('forge')
+var pki = forge.pki
 var Graph = $rdf.graph
 var SPARQL_QUERY = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }'
 
@@ -100,6 +101,8 @@ function verifyKey (certificate, uri, profile, mimeType, callback) {
 Generate a webid cert.
 options should have the uri of the profile in it.
 
+Rewriting to use node-forge.
+
 callback(err, certificate)
 */
 function generate(options, callback) {
@@ -107,48 +110,49 @@ function generate(options, callback) {
         return callback(new Error('No profile uri found'))
     }
 
-    // Maybe we need to validate the uri first?
+	/* options:
+	 * cn: common name info for the cert
+	 * clientkey: the clients public key
+	 * subjectAltName: subject alternative name, this should have the clients webid as the first element
+	 * keystrength: integer
+	 */
+	// Generate an X.509 client cert
+	//var keys = pki.rsa.generateKeyPair(options.keyStrength || 2048)
+	var cert = pki.createCertificate()
 
-    // If we are here then the options has the uri
-    // prepare the options for csr
-    var csr_options = {
-        clientKey: options.clientKey, // We need the clients pub key for this, <keygen>?
-        keyBitSize: options.keySize || 2048,
-        altNames: [
-            'URI: ' + options.uri
-        ],
-        selfSigned: true // Self sign for now
-    }
+	//cert.publicKey = keys.publicKey
+	//The public key should come from the client
+	cert.publicKey = options.clientKey
+	//The validity of the cert
+	cert.validity.notBefore = new Date();
+	cert.validity.notAfter = new Date();
+	cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1)
 
-    var csr = pem.createCSR(csr_options, function (err, csr) {
-        if (err) {
-            console.log('Error: ' + err.message)
-            throw err
-        }
-        return csr
-    })
+    var attrs = [{
+        name: 'commonName',
+        value: options.commonName
+    }, {
+        name: 'countryName',
+        value: options.countryName || 'not specified'
+    }, {
+        name: 'localityName',
+        value: 'Blacksburg'
+    }, {
+        name: 'organizationName',
+        value: 'Test'
+    }]
 
-    var cert_options = {
-        csr: this.csr,
-        days: 999
-    }
+    cert.setSubject(attrs)
+    cert.setIssuer(attrs)
+    // Set the cert extensions
+    cert.setExtensions([{
+        name: 'subjectAltName',
+        altNames: [{
+            type: 6, // URI
+            value: 'http://example.org/webid#me'
+        }]
+    }])
 
-    var cert = pem.createCertificate(cert_options, function (err, result) {
-        if (err) {
-            console.log('Error: ' + err.message)
-            throw err
-        }
-        console.log(result)
-        return result.certificate
-    })
-
-    // Verify the cert once it's created
-    // verify(cert, function (err, result) {
-    //     if (err) {
-    //         console.log('Error: ' + err.message)
-    //         throw err
-    //     }
-    //     // Do something with result
-    // })
-
+    // Should we self-sign the cert? For now I suppose.
+    cert.sign(options.clientKey)
 }
