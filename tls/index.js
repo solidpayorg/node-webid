@@ -5,7 +5,7 @@ exports.generate = generate
 var $rdf = require('rdflib')
 var get = require('../lib/get')
 var parse = require('../lib/parse')
-var forge = require('forge')
+var forge = require('node-forge')
 var pki = forge.pki
 var Graph = $rdf.graph
 var SPARQL_QUERY = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }'
@@ -104,42 +104,60 @@ options should have the uri of the profile in it.
 Rewriting to use node-forge.
 
 callback(err, certificate)
+
+@param options The options object { spakc: clientkey, agent: uri }
+@param callback The callback to be executed expects args: Error err, Cert certfificate
+
+@return callback
+
+The callback arg cert should be an object reprsentation of the certificate with
+the psk12 format of the certificate.
 */
 function generate(options, callback) {
-    if (!options.uri) {
-        return callback(new Error('No profile uri found'))
+    if (!options.uri) return callback(new Error('No uri found'), null)
+    else if (!options.clientKey) return callback(new Error('No public key found'), null)
+
+    /*
+    These can be expanded later, but this is the smallest amount of info needed.
+    options = {
+        spakc: the public key from the client
+        agent: a unique uri to be used as the subject alt name
     }
 
-	/* options:
-	 * cn: common name info for the cert
-	 * clientkey: the clients public key
-	 * subjectAltName: subject alternative name, this should have the clients webid as the first element
-	 * keystrength: integer
-	 */
+    // Usage example
+    webid('tls').generate({
++          spkac: req.body['spkac'],
++          agent: agent // TODO generate agent
++        }, callback)
+    */
 	// Generate an X.509 client cert
-	//var keys = pki.rsa.generateKeyPair(options.keyStrength || 2048)
+    // Generate a key pair for testing purposes.
+	var keys = pki.rsa.generateKeyPair(2048)
+    options.clientKey = keys.publicKey
+
 	var cert = pki.createCertificate()
 
-	//cert.publicKey = keys.publicKey
-	//The public key should come from the client
-	cert.publicKey = options.clientKey
-	//The validity of the cert
+	// cert.publicKey = keys.publicKey
+	// The public key should come from the client
+    // We may need to do some sort of conversion on the key.
+	cert.publicKey = options.spakc
+	// The validity of the cert
 	cert.validity.notBefore = new Date();
 	cert.validity.notAfter = new Date();
 	cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1)
 
     var attrs = [{
         name: 'commonName',
-        value: options.commonName
+        value: options.commonName || options.uri
     }, {
         name: 'countryName',
         value: options.countryName || 'not specified'
     }, {
         name: 'localityName',
-        value: 'Blacksburg'
+        value: options.localityName || 'not specified'
     }, {
         name: 'organizationName',
-        value: 'Test'
+        value: options.organizationName || 'not specified'
     }]
 
     cert.setSubject(attrs)
@@ -149,10 +167,55 @@ function generate(options, callback) {
         name: 'subjectAltName',
         altNames: [{
             type: 6, // URI
-            value: 'http://example.org/webid#me'
+            value: 'https://corysabol.databox.me/profile/card#me'
         }]
     }])
 
     // Should we self-sign the cert? For now I suppose.
-    cert.sign(options.clientKey)
+    cert.sign(keys.privateKey)
+    console.log(cert.publicKey))
+    // Convert the cert to pem format
+    var pem = pki.certificateToPem(cert)
+
+    // Now we need to verify the certificate
+    verify(pem, function (err, result) {
+        if (err) return callback (err, null)
+        else return callback (null, pem)
+    })
+}
+
+//
+function parseForgeCert(cert, callback) {
+    /*
+    verify expected format.
+    var validCert = {
+        subject: { O: 'WebID', CN: 'Nicola Greco (test) [on test_nicola.databox.me]' },
+        issuer: { O: 'WebID', CN: 'Nicola Greco (test) [on test_nicola.databox.me]' },
+        subjectaltname: 'URI:https://test_nicola.databox.me/profile/card#me',
+        modulus: 'C62AE4CE77A8D915527F79EE1B5365099A35A3BF8E4AA68ED7CBF4D6B966ACE0FCAD79DE66A0EA89FF5EF8DAB2619F51E2F28227C9AA594BA3A4176723BA00813D8F8C738359F6240DF8FADD1A7AE56F2B24E7329A189E1065E3E7C2CEC96CC57CD9D3BF782DC15C11FBEFD24E536C46E8E1285BEC27CB3CC6C295595F18BC564A6ACA45ABCB8AD0C6617F42F5151DDB1A42513BE7AA9E2593DFDBB03938C15136C202C61E59DFE7C563F56301B5B29F91C03A9C92458BA26918E22CB137B998FF76EC85E97D16424078A949F491E348D9E33A43C9D5D938C6E12B2F2015FA2C1A950E28C6ECC6DD70CE228275DBB4C085BC4063DA24178F5B13601E3E6CE17F',
+        exponent: '10001',
+        valid_from: 'Jan  1 00:00:00 2000 GMT',
+        valid_to: 'Dec 31 23:59:59 2049 GMT',
+        fingerprint: '17:09:CB:F5:8D:D7:49:BB:36:45:B8:96:01:C9:0F:0D:E7:56:5B:C0',
+        serialNumber: '2A'
+    }
+    */
+
+    var subject = cert.subject
+    var subjPubKeyInfo = subject.getField('subjectPublicKeyInfo')
+    var issuer = cert.issuer
+    var getExt = cert.getExtension
+
+    var rCert = {
+        subject: { O: subject.getField('O'), CN: subject.getField('CN').value },
+        issuer: { O: issuer.getField('O'), CN: issuer.getField('CN').value },
+        subjectaltname: getExt('subjectAltName').value,
+        modulus: '',
+        exponent: '',
+        valid_from: '',
+        valid_to: '',
+        fingerprint: '',
+        serialNumber: ''
+    }
+    rCert.subject = cert.issuer.getField({name: 'commonName'}).value
 }
