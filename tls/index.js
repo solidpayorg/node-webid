@@ -6,6 +6,7 @@ var $rdf = require('rdflib')
 var get = require('../lib/get')
 var parse = require('../lib/parse')
 var forge = require('node-forge')
+var certificate = require('crypto').Certificate
 var pki = forge.pki
 var Graph = $rdf.graph
 var SPARQL_QUERY = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }'
@@ -115,7 +116,7 @@ the psk12 format of the certificate.
 */
 function generate(options, callback) {
     if (!options.uri) return callback(new Error('No uri found'), null)
-    else if (!options.clientKey) return callback(new Error('No public key found'), null)
+    else if (!options.spkac return callback(new Error('No public key found'), null)
 
     /*
     These can be expanded later, but this is the smallest amount of info needed.
@@ -130,20 +131,13 @@ function generate(options, callback) {
 +          agent: agent // TODO generate agent
 +        }, callback)
     */
-	// Generate an X.509 client cert
-    // Generate a key pair for testing purposes.
-	var keys = pki.rsa.generateKeyPair(2048)
-    options.clientKey = keys.publicKey
 
 	var cert = pki.createCertificate()
+    var spkac = parseSpkac(options.spkac)
 
-	// cert.publicKey = keys.publicKey
-	// The public key should come from the client
-    // We may need to do some sort of conversion on the key.
-	cert.publicKey = options.spakc
-	// The validity of the cert
-	cert.validity.notBefore = new Date();
-	cert.validity.notAfter = new Date();
+    cert.publicKey = spkac.publicKey
+	cert.validity.notBefore = new Date()
+	cert.validity.notAfter = new Date()
 	cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1)
 
     var attrs = [{
@@ -151,13 +145,13 @@ function generate(options, callback) {
         value: options.commonName || options.uri
     }, {
         name: 'countryName',
-        value: options.countryName || 'not specified'
+        value: options.countryName || ' '
     }, {
         name: 'localityName',
-        value: options.localityName || 'not specified'
+        value: options.localityName || ' '
     }, {
         name: 'organizationName',
-        value: options.organizationName || 'not specified'
+        value: options.organizationName || ' '
     }]
 
     cert.setSubject(attrs)
@@ -167,21 +161,40 @@ function generate(options, callback) {
         name: 'subjectAltName',
         altNames: [{
             type: 6, // URI
-            value: 'https://corysabol.databox.me/profile/card#me'
+            value: options.agent
         }]
     }])
 
     // Should we self-sign the cert? For now I suppose.
-    cert.sign(keys.privateKey)
-    console.log(cert.publicKey))
-    // Convert the cert to pem format
-    var pem = pki.certificateToPem(cert)
+    cert.sign(cert.publicKey)
 
     // Now we need to verify the certificate
     verify(pem, function (err, result) {
         if (err) return callback (err, null)
         else return callback (null, pem)
     })
+}
+
+/*
+@param spkac The spkac to be parsed.
+@param callback The callback (err, result).
+
+parse a spkac for it's challenge and publicKey
+the resulting object is passed to the callback with the fields:
+challenge, publicKey, valid.
+*/
+function parseSpkac(spkac, callback) {
+    if (!spkac) return callback (new Error('invalid spkac'), null)
+    else if (certificate.verifySpkac(spkac) === false)
+        return callback (new Error('invalid spkac'), null)
+
+    var rval = {
+        challenge: certificate.exportChallenge(spkac),
+        publicKey: certificate.exportPublicKey(spkac),
+        valid: true
+    }
+
+    return callback (null, rval)
 }
 
 //
