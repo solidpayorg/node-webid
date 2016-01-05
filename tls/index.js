@@ -115,8 +115,8 @@ The callback arg cert should be an object reprsentation of the certificate with
 the psk12 format of the certificate.
 */
 function generate(options, callback) {
-    if (!options.uri) return callback(new Error('No uri found'), null)
-    else if (!options.spkac return callback(new Error('No public key found'), null)
+    if (!options.agent) return callback(new Error('No agent uri found'), null)
+    else if (!options.spkac) return callback(new Error('No public key found'), null)
 
     /*
     These can be expanded later, but this is the smallest amount of info needed.
@@ -167,12 +167,6 @@ function generate(options, callback) {
 
     // Should we self-sign the cert? For now I suppose.
     cert.sign(cert.publicKey)
-
-    // Now we need to verify the certificate
-    verify(pem, function (err, result) {
-        if (err) return callback (err, null)
-        else return callback (null, pem)
-    })
 }
 
 /*
