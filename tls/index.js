@@ -132,6 +132,8 @@ function generate(options, callback) {
 +        }, callback)
     */
 
+    // Generate a new keypair
+    var keys = pki.rsa.generateKeyPair(2048)
 	var cert = pki.createCertificate()
     var spkac = parseSpkac(options.spkac)
 
@@ -165,8 +167,7 @@ function generate(options, callback) {
         }]
     }])
 
-    // Should we self-sign the cert? For now I suppose.
-    cert.sign(cert.publicKey)
+    cert.sign(keys.privateKey)
 }
 
 /*
