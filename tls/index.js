@@ -120,24 +120,19 @@ function generate(options, callback) {
     if (!options.agent) return callback(new Error('No agent uri found'), null)
     else if (!options.spkac) return callback(new Error('No public key found'), null)
 
-    /*
-    These can be expanded later, but this is the smallest amount of info needed.
-    options = {
-        spakc: the public key from the client
-        agent: a unique uri to be used as the subject alt name
-    }
 
-    // Usage example
+    /* Usage example
     webid('tls').generate({
-+          spkac: req.body['spkac'],
-+          agent: agent
-+        }, callback)
+        spkac: req.body['spkac'],
+        agent: agent
+    }, callback)
     */
 
     // Generate a new keypair
     var keys = pki.rsa.generateKeyPair(2048)
 	var cert = pki.createCertificate()
     var spkac = parseSpkac(options.spkac)
+    cert.serialNumber = '01'
     // Convert the publicKey to a forge public key
     cert.publicKey = pki.publicKeyFromPem(spkac.publicKey)
     // Validity
@@ -159,26 +154,6 @@ function generate(options, callback) {
         value: options.organizationName || '.'
     }]
 
-    // var attrs = [{
-    //     name: 'commonName',
-    //     value: 'example.org'
-    // }, {
-    //     name: 'countryName',
-    //     value: 'US'
-    // }, {
-    //     shortName: 'ST',
-    //     value: 'Virginia'
-    // }, {
-    //     name: 'localityName',
-    //     value: 'Blacksburg'
-    // }, {
-    //     name: 'organizationName',
-    //     value: 'Test'
-    // }, {
-    //     shortName: 'OU',
-    //     value: 'Test'
-    // }];
-
     cert.setSubject(attrs)
     cert.setIssuer(attrs)
     // Set the cert extensions
@@ -186,7 +161,7 @@ function generate(options, callback) {
         name: 'subjectAltName',
         altNames: [{
             type: 6, // URI
-            value: options.agent
+            value: 'URI: ' + options.agent
         }]
     }])
 
@@ -195,7 +170,9 @@ function generate(options, callback) {
     var rval = {
         modulus: cert.publicKey.n,
         exponent: cert.publicKey.e,
-        certificate: cert
+        // This needs to be some useful serialization other than a forge cert
+        certificate: cert,
+        ldCert: parseForgeCert(cert)
     }
 }
 
@@ -217,8 +194,7 @@ function parseSpkac(spkac) {
     return rval
 }
 
-//
-function parseForgeCert(cert, callback) {
+function parseForgeCert(cert) {
     /*
     verify expected format.
     var validCert = {
@@ -235,25 +211,23 @@ function parseForgeCert(cert, callback) {
     */
 
     var subject = cert.subject
-    var subjPubKeyInfo = subject.getField('subjectPublicKeyInfo')
-
-    for (v in subjPubKeyInfo)
-        console.log(subjPubKeyInfo[v])
-
     var issuer = cert.issuer
-    var getExt = cert.getExtension
+    var altName = cert.getExtension('subjectAltName').altNames[0].value
 
-    var rCert = {
+    var rval = {
         subject: { O: subject.getField('O'), CN: subject.getField('CN').value },
         issuer: { O: issuer.getField('O'), CN: issuer.getField('CN').value },
-        subjectaltname: getExt('subjectAltName').value,
-        modulus: '',
-        exponent: '',
-        valid_from: '',
-        valid_to: '',
-        fingerprint: '',
-        serialNumber: ''
+        subjectaltname: altName,
+        modulus: cert.publicKey.n.toString(),
+        exponent: cert.publicKey.e.toString(),
+        valid_from: cert.validity.notBefore.toString(),
+        valid_to: cert.validity.notAfter.toString(),
+        // This breaks at the native level saying that the URI is malformed
+        // Need to look into this further
+        // fingerprint: pki.getPublicKeyFingerprint(cert.publicKey).toString(),
+        fingetprint: '',
+        serialNumber: cert.serialNumber
     }
 
-    return callback()
+    return rval
 }

@@ -124,7 +124,7 @@ describe('WebID', function () {
         }
         tls.generate(opts, function (err, cert) {
           expect(err).to.not.exist
-          tls.verify(cert.certificate, function (err, result) {
+          tls.verify(cert.ldCert, function (err, result) {
             expect(err).to.not.exist
             expect(result).to.equal('https://corysabol.databox.me/profile/card#me')
           })
