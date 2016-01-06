@@ -2,7 +2,6 @@ var webid = require('../')
 var tls = require('../tls')
 var chai = require('chai')
 var fs = require('fs')
-var os = require('os')
 var expect = chai.expect
 
 var validCert = {
@@ -112,6 +111,7 @@ describe('WebID', function () {
         var spkacFile
         try {
             spkacFile = fs.readFileSync(__dirname+'/spkac.cnf')
+            spkacFile = new Buffer(spkacFile)
         } catch (err) {
             expect(err).to.not.exist
         }
@@ -124,7 +124,7 @@ describe('WebID', function () {
         }
         tls.generate(opts, function (err, cert) {
           expect(err).to.not.exist
-          tls.verify(cert, function (err, result) {
+          tls.verify(cert.certificate, function (err, result) {
             expect(err).to.not.exist
             expect(result).to.equal('https://corysabol.databox.me/profile/card#me')
           })

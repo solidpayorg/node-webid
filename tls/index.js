@@ -6,7 +6,9 @@ var $rdf = require('rdflib')
 var get = require('../lib/get')
 var parse = require('../lib/parse')
 var forge = require('node-forge')
-var certificate = require('crypto').Certificate
+var crypto = require('crypto')
+crypto.DEFAULT_ENCODING = 'buffer';
+var certificate = new crypto.Certificate()
 var pki = forge.pki
 var Graph = $rdf.graph
 var SPARQL_QUERY = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }'
@@ -106,11 +108,11 @@ Rewriting to use node-forge.
 
 callback(err, certificate)
 
+@author Cory Sabol
+@email cssabol@uncg.edu
 @param options The options object { spakc: clientkey, agent: uri }
 @param callback The callback to be executed expects args: Error err, Cert certfificate
-
 @return callback
-
 The callback arg cert should be an object reprsentation of the certificate with
 the psk12 format of the certificate.
 */
@@ -128,7 +130,7 @@ function generate(options, callback) {
     // Usage example
     webid('tls').generate({
 +          spkac: req.body['spkac'],
-+          agent: agent // TODO generate agent
++          agent: agent
 +        }, callback)
     */
 
@@ -136,25 +138,46 @@ function generate(options, callback) {
     var keys = pki.rsa.generateKeyPair(2048)
 	var cert = pki.createCertificate()
     var spkac = parseSpkac(options.spkac)
-
-    cert.publicKey = spkac.publicKey
+    // Convert the publicKey to a forge public key
+    cert.publicKey = pki.publicKeyFromPem(spkac.publicKey)
+    // Validity
 	cert.validity.notBefore = new Date()
 	cert.validity.notAfter = new Date()
 	cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1)
 
     var attrs = [{
         name: 'commonName',
-        value: options.commonName || options.uri
+        value: options.commonName || options.agent
     }, {
         name: 'countryName',
-        value: options.countryName || ' '
+        value: options.countryName || '.'
     }, {
         name: 'localityName',
-        value: options.localityName || ' '
+        value: options.localityName || '.'
     }, {
         name: 'organizationName',
-        value: options.organizationName || ' '
+        value: options.organizationName || '.'
     }]
+
+    // var attrs = [{
+    //     name: 'commonName',
+    //     value: 'example.org'
+    // }, {
+    //     name: 'countryName',
+    //     value: 'US'
+    // }, {
+    //     shortName: 'ST',
+    //     value: 'Virginia'
+    // }, {
+    //     name: 'localityName',
+    //     value: 'Blacksburg'
+    // }, {
+    //     name: 'organizationName',
+    //     value: 'Test'
+    // }, {
+    //     shortName: 'OU',
+    //     value: 'Test'
+    // }];
 
     cert.setSubject(attrs)
     cert.setIssuer(attrs)
@@ -168,28 +191,30 @@ function generate(options, callback) {
     }])
 
     cert.sign(keys.privateKey)
+
+    var rval = {
+        modulus: cert.publicKey.n,
+        exponent: cert.publicKey.e,
+        certificate: cert
+    }
 }
 
 /*
 @param spkac The spkac to be parsed.
-@param callback The callback (err, result).
-
 parse a spkac for it's challenge and publicKey
-the resulting object is passed to the callback with the fields:
-challenge, publicKey, valid.
 */
-function parseSpkac(spkac, callback) {
-    if (!spkac) return callback (new Error('invalid spkac'), null)
+function parseSpkac(spkac) {
+    if (!spkac) throw new Error('no spkac specified')
     else if (certificate.verifySpkac(spkac) === false)
-        return callback (new Error('invalid spkac'), null)
+        throw new Error('invalid spkac')
 
     var rval = {
-        challenge: certificate.exportChallenge(spkac),
-        publicKey: certificate.exportPublicKey(spkac),
-        valid: true
+        // Note that these methods expect a <buffer>
+        challenge: certificate.exportChallenge(spkac).toString(),
+        publicKey: certificate.exportPublicKey(spkac).toString()
     }
 
-    return callback (null, rval)
+    return rval
 }
 
 //
@@ -211,6 +236,10 @@ function parseForgeCert(cert, callback) {
 
     var subject = cert.subject
     var subjPubKeyInfo = subject.getField('subjectPublicKeyInfo')
+
+    for (v in subjPubKeyInfo)
+        console.log(subjPubKeyInfo[v])
+
     var issuer = cert.issuer
     var getExt = cert.getExtension
 
@@ -225,5 +254,6 @@ function parseForgeCert(cert, callback) {
         fingerprint: '',
         serialNumber: ''
     }
-    rCert.subject = cert.issuer.getField({name: 'commonName'}).value
+
+    return callback()
 }
