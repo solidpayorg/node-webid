@@ -123,17 +123,17 @@ function generate (options, callback) {
   if (!options.spkac) {
     return callback(new Error('No public key found'), null)
   }
-
-  // Generate a new keypair to sign the certificate
-  var keys = pki.rsa.generateKeyPair(2048)
+  if (!certificate.verifySpkac(options.spkac)) {
+    return callback(new Error('Invalid SPKAC'))
+  }
 
   // Generate a new certificate
   var cert = pki.createCertificate()
+  cert.serialNumber = '01'
 
   // Get fields from SPKAC to populate new cert
-  var spkac = parseSpkac(options.spkac)
-  cert.serialNumber = '01'
-  cert.publicKey = pki.publicKeyFromPem(spkac.publicKey)
+  var publicKey = certificate.exportPublicKey(options.spkac).toString()
+  cert.publicKey = pki.publicKeyFromPem(publicKey)
 
   // Validity of 1 year
   cert.validity.notBefore = new Date()
@@ -173,30 +173,10 @@ function generate (options, callback) {
     }
   ])
 
+  // Generate a new keypair to sign the certificate
+  // TODO this make is not really "self-signed"
+  var keys = pki.rsa.generateKeyPair(2048)
   cert.sign(keys.privateKey)
 
   return callback(null, cert)
 }
-
-/*
-@param spkac The spkac to be parsed.
-parse a spkac for it's challenge and publicKey
-*/
-function parseSpkac (spkac) {
-  if (!spkac) {
-    throw new Error('no spkac specified')
-  }
-
-  if (certificate.verifySpkac(spkac) === false) {
-    throw new Error('invalid spkac')
-  }
-
-  var rval = {
-    // Note that these methods expect a <buffer>
-    challenge: certificate.exportChallenge(spkac).toString(),
-    publicKey: certificate.exportPublicKey(spkac).toString()
-  }
-
-  return rval
-}
-

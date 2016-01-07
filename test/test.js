@@ -127,6 +127,7 @@ describe('WebID', function () {
       }
 
       it('should create a valid certificate', function (done) {
+        this.timeout(10000)
         // Read in the spkac.cnf file.
         var spkacFile
         try {
