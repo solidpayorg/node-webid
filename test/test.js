@@ -33,7 +33,7 @@ describe('WebID', function () {
     })
 
     describe('verify', function () {
-      this.timeout(10000)
+      //this.timeout(10000)
 
       it('valid certificate should have a uri as result', function (done) {
         tls.verify(validCert, function (err, result) {
@@ -124,12 +124,13 @@ describe('WebID', function () {
         }
         tls.generate(opts, function (err, cert) {
           expect(err).to.not.exist
+          expect(cert).to.exist
           tls.verify(cert.ldCert, function (err, result) {
-            expect(err).to.not.exist
-            expect(result).to.equal('https://corysabol.databox.me/profile/card#me')
+              expect(err).not.to.exist
+              expect(result).to.equal('https://corysabol.databox.me/profile/card#me')
+              done()
           })
         })
-        done()
       })
     })
   })
