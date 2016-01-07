@@ -115,14 +115,11 @@ describe('WebID', function () {
         var rval = {
           subject: { O: subject.getField('O').value, CN: subject.getField('CN').value },
           issuer: { O: issuer.getField('O').value, CN: issuer.getField('CN').value },
-          subjectaltname: altName,
+          subjectaltname: 'URI:' + altName,
           modulus: cert.publicKey.n.toString(),
           exponent: cert.publicKey.e.toString(),
           valid_from: cert.validity.notBefore.toString(),
           valid_to: cert.validity.notAfter.toString(),
-          // This breaks at the native level saying that the URI is malformed
-          // Need to look into this further
-          // fingerprint: pki.getPublicKeyFingerprint(cert.publicKey).toString(),
           fingerprint: '',
           serialNumber: cert.serialNumber
         }
@@ -149,7 +146,9 @@ describe('WebID', function () {
           console.log(cert)
           expect(err).to.not.exist
           expect(cert).to.exist
-          tls.verify(parseForgeCert(cert), function (err, result) {
+          var parsedCert = parseForgeCert(cert)
+          console.log(parsedCert)
+          tls.verify(parsedCert, function (err, result) {
               expect(err).not.to.exist
               expect(result).to.equal('https://corysabol.databox.me/profile/card#me')
               done()
