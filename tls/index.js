@@ -6,8 +6,9 @@ var $rdf = require('rdflib')
 var get = require('../lib/get')
 var parse = require('../lib/parse')
 var forge = require('node-forge')
+var url = require('url')
 var crypto = require('crypto')
-crypto.DEFAULT_ENCODING = 'buffer';
+crypto.DEFAULT_ENCODING = 'buffer'
 var certificate = new crypto.Certificate()
 var pki = forge.pki
 var Graph = $rdf.graph
@@ -115,107 +116,112 @@ callback(err, certificate)
 The callback arg cert should be an object reprsentation of the certificate with
 the psk12 format of the certificate.
 */
-function generate(options, callback) {
-    if (!options.agent) return callback(new Error('No agent uri found'), null)
-    else if (!options.spkac) return callback(new Error('No public key found'), null)
+function generate (options, callback) {
+  if (!options.agent) {
+    return callback(new Error('No agent uri found'))
+  }
+  if (!options.spkac) {
+    return callback(new Error('No public key found'), null)
+  }
 
+  // Generate a new keypair to sign the certificate
+  var keys = pki.rsa.generateKeyPair(2048)
 
-    /* Usage example
-    webid('tls').generate({
-        spkac: req.body['spkac'],
-        agent: agent
-    }, callback)
-    */
+  // Generate a new certificate
+  var cert = pki.createCertificate()
 
-    // Generate a new keypair
-    var keys = pki.rsa.generateKeyPair(2048)
-	var cert = pki.createCertificate()
-    var spkac = parseSpkac(options.spkac)
-    cert.serialNumber = '01'
-    // Convert the publicKey to a forge public key
-    cert.publicKey = pki.publicKeyFromPem(spkac.publicKey)
-    // Validity
-	cert.validity.notBefore = new Date()
-	cert.validity.notAfter = new Date()
-	cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1)
+  // Get fields from SPKAC to populate new cert
+  var spkac = parseSpkac(options.spkac)
+  cert.serialNumber = '01'
+  cert.publicKey = pki.publicKeyFromPem(spkac.publicKey)
 
-    var attrs = [{
-        name: 'commonName',
-        value: options.commonName || options.agent
+  // Validity of 1 year
+  cert.validity.notBefore = new Date()
+  cert.validity.notAfter = new Date()
+  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1)
+
+  // `.` is default with the OpenSSL command line tool
+  var hostname = url.parse(options.agent).hostname
+  var attrs = [{
+    name: 'commonName',
+    value: hostname
+  }, {
+    name: 'countryName',
+    value: options.countryName || '.'
+  }, {
+    name: 'localityName',
+    value: options.localityName || '.'
+  }, {
+    name: 'organizationName',
+    value: options.organizationName || '.'
+  }]
+
+  // Set same fields for certificate and issuer
+  cert.setSubject(attrs)
+  cert.setIssuer(attrs)
+
+  // Set the cert extensions
+  cert.setExtensions([
+    {
+      name: 'subjectAltName',
+      altNames: [{
+        type: 6, // URI
+        value: options.agent
+      }]
     }, {
-        name: 'countryName',
-        value: options.countryName || '.'
-    }, {
-        name: 'localityName',
-        value: options.localityName || '.'
-    }, {
-        name: 'organizationName',
-        value: options.organizationName || '.'
-    }]
-
-    cert.setSubject(attrs)
-    cert.setIssuer(attrs)
-    // Set the cert extensions
-    cert.setExtensions([{
-        name: 'subjectAltName',
-        altNames: [{
-            type: 6, // URI
-            value: 'URI:' + options.agent
-        }]
-    }])
-
-    cert.sign(keys.privateKey)
-
-    var rval = {
-        modulus: cert.publicKey.n,
-        exponent: cert.publicKey.e,
-        // This needs to be some useful serialization other than a forge cert
-        certificate: cert,
-        ldCert: parseForgeCert(cert)
+      name: 'subjectKeyIdentifier'
     }
+  ])
 
-    return callback(null, rval)
+  cert.sign(keys.privateKey)
+
+  return callback(null, cert)
 }
 
 /*
 @param spkac The spkac to be parsed.
 parse a spkac for it's challenge and publicKey
 */
-function parseSpkac(spkac) {
-    if (!spkac) throw new Error('no spkac specified')
-    else if (certificate.verifySpkac(spkac) === false)
-        throw new Error('invalid spkac')
+function parseSpkac (spkac) {
+  if (!spkac) {
+    throw new Error('no spkac specified')
+  }
 
-    var rval = {
-        // Note that these methods expect a <buffer>
-        challenge: certificate.exportChallenge(spkac).toString(),
-        publicKey: certificate.exportPublicKey(spkac).toString()
-    }
+  if (certificate.verifySpkac(spkac) === false) {
+    throw new Error('invalid spkac')
+  }
 
-    return rval
+  var rval = {
+    // Note that these methods expect a <buffer>
+    challenge: certificate.exportChallenge(spkac).toString(),
+    publicKey: certificate.exportPublicKey(spkac).toString()
+  }
+
+  return rval
 }
 
-function parseForgeCert(cert) {
-    var subject = cert.subject
-    var issuer = cert.issuer
-    var altName = cert.getExtension('subjectAltName').altNames[0].value
+/*
+@param spkac The spkac to be parsed.
+Utils to convert a cert as express would parse it
+*/
+function parseForgeCert (cert) {
+  var subject = cert.subject
+  var issuer = cert.issuer
+  var altName = cert.getExtension('subjectAltName').altNames[0].value
 
-    var rval = {
-        subject: { O: subject.getField('O').value, CN: subject.getField('CN').value },
-        issuer: { O: issuer.getField('O').value, CN: issuer.getField('CN').value },
-        subjectaltname: altName,
-        modulus: cert.publicKey.n.toString(),
-        exponent: cert.publicKey.e.toString(),
-        valid_from: cert.validity.notBefore.toString(),
-        valid_to: cert.validity.notAfter.toString(),
-        // This breaks at the native level saying that the URI is malformed
-        // Need to look into this further
-        // fingerprint: pki.getPublicKeyFingerprint(cert.publicKey).toString(),
-        fingerprint: '',
-        serialNumber: cert.serialNumber
-    }
-
-    console.log(rval.subjectaltname)
-
-    return rval
+  var rval = {
+    subject: { O: subject.getField('O').value, CN: subject.getField('CN').value },
+    issuer: { O: issuer.getField('O').value, CN: issuer.getField('CN').value },
+    subjectaltname: altName,
+    modulus: cert.publicKey.n.toString(),
+    exponent: cert.publicKey.e.toString(),
+    valid_from: cert.validity.notBefore.toString(),
+    valid_to: cert.validity.notAfter.toString(),
+    // This breaks at the native level saying that the URI is malformed
+    // Need to look into this further
+    // fingerprint: pki.getPublicKeyFingerprint(cert.publicKey).toString(),
+    fingerprint: '',
+    serialNumber: cert.serialNumber
+  }
+  return rval
 }
