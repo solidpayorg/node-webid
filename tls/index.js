@@ -200,28 +200,3 @@ function parseSpkac (spkac) {
   return rval
 }
 
-/*
-@param spkac The spkac to be parsed.
-Utils to convert a cert as express would parse it
-*/
-function parseForgeCert (cert) {
-  var subject = cert.subject
-  var issuer = cert.issuer
-  var altName = cert.getExtension('subjectAltName').altNames[0].value
-
-  var rval = {
-    subject: { O: subject.getField('O').value, CN: subject.getField('CN').value },
-    issuer: { O: issuer.getField('O').value, CN: issuer.getField('CN').value },
-    subjectaltname: altName,
-    modulus: cert.publicKey.n.toString(),
-    exponent: cert.publicKey.e.toString(),
-    valid_from: cert.validity.notBefore.toString(),
-    valid_to: cert.validity.notAfter.toString(),
-    // This breaks at the native level saying that the URI is malformed
-    // Need to look into this further
-    // fingerprint: pki.getPublicKeyFingerprint(cert.publicKey).toString(),
-    fingerprint: '',
-    serialNumber: cert.serialNumber
-  }
-  return rval
-}

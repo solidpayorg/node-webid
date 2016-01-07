@@ -33,7 +33,7 @@ describe('WebID', function () {
     })
 
     describe('verify', function () {
-      //this.timeout(10000)
+      this.timeout(10000)
 
       it('valid certificate should have a uri as result', function (done) {
         tls.verify(validCert, function (err, result) {
@@ -106,6 +106,29 @@ describe('WebID', function () {
     })
 
     describe('generate', function () {
+
+      function parseForgeCert (cert) {
+        var subject = cert.subject
+        var issuer = cert.issuer
+        var altName = cert.getExtension('subjectAltName').altNames[0].value
+
+        var rval = {
+          subject: { O: subject.getField('O').value, CN: subject.getField('CN').value },
+          issuer: { O: issuer.getField('O').value, CN: issuer.getField('CN').value },
+          subjectaltname: altName,
+          modulus: cert.publicKey.n.toString(),
+          exponent: cert.publicKey.e.toString(),
+          valid_from: cert.validity.notBefore.toString(),
+          valid_to: cert.validity.notAfter.toString(),
+          // This breaks at the native level saying that the URI is malformed
+          // Need to look into this further
+          // fingerprint: pki.getPublicKeyFingerprint(cert.publicKey).toString(),
+          fingerprint: '',
+          serialNumber: cert.serialNumber
+        }
+        return rval
+      }
+
       it('should create a valid certificate', function (done) {
         // Read in the spkac.cnf file.
         var spkacFile
@@ -123,9 +146,10 @@ describe('WebID', function () {
             agent: 'https://corysabol.databox.me/profile/card#me'
         }
         tls.generate(opts, function (err, cert) {
+          console.log(cert)
           expect(err).to.not.exist
           expect(cert).to.exist
-          tls.verify(cert.ldCert, function (err, result) {
+          tls.verify(parseForgeCert(cert), function (err, result) {
               expect(err).not.to.exist
               expect(result).to.equal('https://corysabol.databox.me/profile/card#me')
               done()
