@@ -100,22 +100,6 @@ function verifyKey (certificate, uri, profile, mimeType, callback) {
   })
 }
 
-/*
-Generate a webid cert.
-options should have the uri of the profile in it.
-
-Rewriting to use node-forge.
-
-callback(err, certificate)
-
-@author Cory Sabol
-@email cssabol@uncg.edu
-@param options The options object { spakc: clientkey, agent: uri }
-@param callback The callback to be executed expects args: Error err, Cert certfificate
-@return callback
-The callback arg cert should be an object reprsentation of the certificate with
-the psk12 format of the certificate.
-*/
 function generate (options, callback) {
   if (!options.agent) {
     return callback(new Error('No agent uri found'))
@@ -123,13 +107,13 @@ function generate (options, callback) {
   if (!options.spkac) {
     return callback(new Error('No public key found'), null)
   }
-  if (!certificate.verifySpkac(options.spkac)) {
+  if (!certificate.verifySpkac(new Buffer(options.spkac))) {
     return callback(new Error('Invalid SPKAC'))
   }
 
   // Generate a new certificate
   var cert = pki.createCertificate()
-  cert.serialNumber = '01'
+  cert.serialNumber = '0'
 
   // Get fields from SPKAC to populate new cert
   var publicKey = certificate.exportPublicKey(options.spkac).toString()
