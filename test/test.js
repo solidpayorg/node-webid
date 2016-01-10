@@ -3,6 +3,11 @@ var tls = require('../tls')
 var chai = require('chai')
 var fs = require('fs')
 var expect = chai.expect
+var crypto = require('crypto')
+crypto.DEFAULT_ENCODING = 'buffer'
+var certificate = new crypto.Certificate()
+var forge = require('node-forge')
+var pki = forge.pki
 
 var validCert = {
   subject: { O: 'WebID', CN: 'Nicola Greco (test) [on test_nicola.databox.me]' },
@@ -131,7 +136,7 @@ describe('WebID', function () {
         // Read in the spkac.cnf file.
         var spkacFile
         try {
-            spkacFile = fs.readFileSync(__dirname+'/spkac.cnf')
+            spkacFile = fs.readFileSync(__dirname + '/spkac.cnf')
             spkacFile = new Buffer(spkacFile)
         } catch (err) {
             expect(err).to.not.exist
@@ -147,11 +152,10 @@ describe('WebID', function () {
           expect(err).to.not.exist
           expect(cert).to.exist
           var parsedCert = parseForgeCert(cert)
-          tls.verify(parsedCert, function (err, result) {
-              expect(err).not.to.exist
-              expect(result).to.equal('https://corysabol.databox.me/profile/card#me')
-              done()
-          })
+          var publicKey = certificate.exportPublicKey(spkacFile).toString()
+          var publicKeyString = pki.publicKeyFromPem(publicKey).n.toString()
+          expect(publicKeyString).to.equal(parsedCert.modulus)
+          done(err)
         })
       })
     })
