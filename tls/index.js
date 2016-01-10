@@ -113,7 +113,7 @@ function generate (options, callback) {
 
   // Generate a new certificate
   var cert = pki.createCertificate()
-  cert.serialNumber = '0'
+  cert.serialNumber = (42).toString(16)
 
   // Get fields from SPKAC to populate new cert
   var publicKey = certificate.exportPublicKey(options.spkac).toString()
@@ -130,14 +130,8 @@ function generate (options, callback) {
     name: 'commonName',
     value: hostname
   }, {
-    name: 'countryName',
-    value: options.countryName || '.'
-  }, {
-    name: 'localityName',
-    value: options.localityName || '.'
-  }, {
     name: 'organizationName',
-    value: options.organizationName || '.'
+    value: 'WebID'
   }]
 
   // Set same fields for certificate and issuer
@@ -147,6 +141,10 @@ function generate (options, callback) {
   // Set the cert extensions
   cert.setExtensions([
     {
+      name: 'basicConstraints',
+      cA: false,
+      critical: true
+    }, {
       name: 'subjectAltName',
       altNames: [{
         type: 6, // URI
@@ -159,8 +157,8 @@ function generate (options, callback) {
 
   // Generate a new keypair to sign the certificate
   // TODO this make is not really "self-signed"
-  var keys = pki.rsa.generateKeyPair(2048)
-  cert.sign(keys.privateKey)
+  var keys = pki.rsa.generateKeyPair(1024)
+  cert.sign(keys.privateKey, forge.md.sha256.create())
 
   return callback(null, cert)
 }

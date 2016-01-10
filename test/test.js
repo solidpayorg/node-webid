@@ -144,11 +144,9 @@ describe('WebID', function () {
             agent: 'https://corysabol.databox.me/profile/card#me'
         }
         tls.generate(opts, function (err, cert) {
-          console.log(cert)
           expect(err).to.not.exist
           expect(cert).to.exist
           var parsedCert = parseForgeCert(cert)
-          console.log(parsedCert)
           tls.verify(parsedCert, function (err, result) {
               expect(err).not.to.exist
               expect(result).to.equal('https://corysabol.databox.me/profile/card#me')
