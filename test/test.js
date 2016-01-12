@@ -1,7 +1,13 @@
 var webid = require('../')
 var tls = require('../tls')
 var chai = require('chai')
+var fs = require('fs')
 var expect = chai.expect
+var crypto = require('crypto')
+crypto.DEFAULT_ENCODING = 'buffer'
+var certificate = new crypto.Certificate()
+var forge = require('node-forge')
+var pki = forge.pki
 
 var validCert = {
   subject: { O: 'WebID', CN: 'Nicola Greco (test) [on test_nicola.databox.me]' },
@@ -100,6 +106,56 @@ describe('WebID', function () {
         webid('tls').verify(cert_only_uri, function (err, result) {
           expect(err.message).to.equal('Missing modulus value in client certificate')
           done()
+        })
+      })
+    })
+
+    describe('generate', function () {
+
+      function parseForgeCert (cert) {
+        var subject = cert.subject
+        var issuer = cert.issuer
+        var altName = cert.getExtension('subjectAltName').altNames[0].value
+
+        var rval = {
+          subject: { O: subject.getField('O').value, CN: subject.getField('CN').value },
+          issuer: { O: issuer.getField('O').value, CN: issuer.getField('CN').value },
+          subjectaltname: 'URI:' + altName,
+          modulus: cert.publicKey.n.toString(),
+          exponent: cert.publicKey.e.toString(),
+          valid_from: cert.validity.notBefore.toString(),
+          valid_to: cert.validity.notAfter.toString(),
+          fingerprint: '',
+          serialNumber: cert.serialNumber
+        }
+        return rval
+      }
+
+      it('should create a valid certificate', function (done) {
+        this.timeout(10000)
+        // Read in the spkac.cnf file.
+        var spkacFile
+        try {
+            spkacFile = fs.readFileSync(__dirname + '/spkac.cnf')
+            spkacFile = new Buffer(spkacFile)
+        } catch (err) {
+            expect(err).to.not.exist
+        }
+
+        expect(spkacFile).to.exist
+
+        var opts = {
+            spkac: spkacFile,
+            agent: 'https://corysabol.databox.me/profile/card#me'
+        }
+        tls.generate(opts, function (err, cert) {
+          expect(err).to.not.exist
+          expect(cert).to.exist
+          var parsedCert = parseForgeCert(cert)
+          var publicKey = certificate.exportPublicKey(spkacFile).toString()
+          var publicKeyString = pki.publicKeyFromPem(publicKey).n.toString()
+          expect(publicKeyString).to.equal(parsedCert.modulus)
+          done(err)
         })
       })
     })

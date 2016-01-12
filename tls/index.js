@@ -1,10 +1,17 @@
 exports.verify = verify
 exports.generate = generate
 exports.verifyKey = verifyKey
+exports.generate = generate
 
 var $rdf = require('rdflib')
 var get = require('../lib/get')
 var parse = require('../lib/parse')
+var forge = require('node-forge')
+var url = require('url')
+var crypto = require('crypto')
+crypto.DEFAULT_ENCODING = 'buffer'
+var certificate = new crypto.Certificate()
+var pki = forge.pki
 var Graph = $rdf.graph
 var SPARQL_QUERY = 'PREFIX cert: <http://www.w3.org/ns/auth/cert#> SELECT ?webid ?m ?e WHERE { ?webid cert:key ?key . ?key cert:modulus ?m . ?key cert:exponent ?e . }'
 
@@ -69,7 +76,6 @@ function verifyKey (certificate, uri, profile, mimeType, callback) {
     if (err) {
       return callback(err)
     }
-    console
     var certExponent = parseInt(certificate.exponent, 16).toString()
     var query = $rdf.SPARQLToQuery(SPARQL_QUERY, undefined, graph)
     graph.query(
@@ -97,4 +103,67 @@ function verifyKey (certificate, uri, profile, mimeType, callback) {
       }
     )
   })
+}
+
+function generate (options, callback) {
+  if (!options.agent) {
+    return callback(new Error('No agent uri found'))
+  }
+  if (!options.spkac) {
+    return callback(new Error('No public key found'), null)
+  }
+  if (!certificate.verifySpkac(new Buffer(options.spkac))) {
+    return callback(new Error('Invalid SPKAC'))
+  }
+
+  // Generate a new certificate
+  var cert = pki.createCertificate()
+  cert.serialNumber = (42).toString(16)
+
+  // Get fields from SPKAC to populate new cert
+  var publicKey = certificate.exportPublicKey(options.spkac).toString()
+  cert.publicKey = pki.publicKeyFromPem(publicKey)
+
+  // Validity of 1 year
+  cert.validity.notBefore = new Date()
+  cert.validity.notAfter = new Date()
+  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1)
+
+  // `.` is default with the OpenSSL command line tool
+  var hostname = url.parse(options.agent).hostname
+  var attrs = [{
+    name: 'commonName',
+    value: hostname
+  }, {
+    name: 'organizationName',
+    value: 'WebID'
+  }]
+
+  // Set same fields for certificate and issuer
+  cert.setSubject(attrs)
+  cert.setIssuer(attrs)
+
+  // Set the cert extensions
+  cert.setExtensions([
+    {
+      name: 'basicConstraints',
+      cA: false,
+      critical: true
+    }, {
+      name: 'subjectAltName',
+      altNames: [{
+        type: 6, // URI
+        value: options.agent
+      }]
+    }, {
+      name: 'subjectKeyIdentifier'
+    }
+  ])
+
+  // Generate a new keypair to sign the certificate
+  // TODO this make is not really "self-signed"
+  var keys = pki.rsa.generateKeyPair(1024)
+  cert.sign(keys.privateKey, forge.md.sha256.create())
+
+  return callback(null, cert)
 }
