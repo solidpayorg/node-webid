@@ -130,13 +130,13 @@ function generate (options, callback) {
   cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1)
 
   // `.` is default with the OpenSSL command line tool
-  var hostname = url.parse(options.agent).hostname
+  var commonName = options.commonName || url.parse(options.agent).hostname
   var attrs = [{
     name: 'commonName',
-    value: hostname
+    value: commonName
   }, {
     name: 'organizationName',
-    value: 'WebID'
+    value: options.organizationName || 'WebID'
   }]
 
   // Set same fields for certificate and issuer
