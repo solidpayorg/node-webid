@@ -109,10 +109,11 @@ function generate (options, callback) {
   if (!certificate.verifySpkac(new Buffer(options.spkac))) {
     return callback(new Error('Invalid SPKAC'))
   }
+  options.duration = options.duration || 10
 
   // Generate a new certificate
   var cert = pki.createCertificate()
-  cert.serialNumber = (42).toString(16)
+  cert.serialNumber = (Date.now()).toString(16)
 
   // Get fields from SPKAC to populate new cert
   var publicKey = certificate.exportPublicKey(options.spkac).toString()
@@ -121,7 +122,7 @@ function generate (options, callback) {
   // Validity of 1 year
   cert.validity.notBefore = new Date()
   cert.validity.notAfter = new Date()
-  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1)
+  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + options.duration)
 
   // `.` is default with the OpenSSL command line tool
   var commonName = options.commonName || url.parse(options.agent).hostname
