@@ -70,6 +70,22 @@ app.post('/register', bodyParser(), function (req, res) {
 })
 ```
 
+### Options
+
+```javascript
+var options = {
+  // <keygen name=spkack>
+  spkac: new Buffer(req.body.spkac),
+  agent: req.session.userWebId,
+  commonName: '',
+  organizationName: '',
+  issuer: {
+    commonName: '',
+    organizationName: ''
+  }
+}
+```
+
 ## History
 
 Originally forked from [magnetik/node-webid](https://github.com/magnetik/node-webid)

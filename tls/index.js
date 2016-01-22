@@ -125,7 +125,7 @@ function generate (options, callback) {
 
   // `.` is default with the OpenSSL command line tool
   var commonName = options.commonName || url.parse(options.agent).hostname
-  var attrs = [{
+  var attrsSubject = [{
     name: 'commonName',
     value: commonName
   }, {
@@ -133,9 +133,26 @@ function generate (options, callback) {
     value: options.organizationName || 'WebID'
   }]
 
+  var attrsIssuer = [{
+    name: 'commonName',
+    value: commonName
+  }, {
+    name: 'organizationName',
+    value: options.organizationName || 'WebID'
+  }]
+
+  if (options.issuer) {
+    if (options.issuer.commonName) {
+      attrsIssuer[0].value = options.issuer.commonName
+    }
+    if (options.issuer.organizationName) {
+      attrsIssuer[1].value = options.issuer.organizationName
+    }
+  }
+
   // Set same fields for certificate and issuer
-  cert.setSubject(attrs)
-  cert.setIssuer(attrs)
+  cert.setSubject(attrsSubject)
+  cert.setIssuer(attrsIssuer)
 
   // Set the cert extensions
   cert.setExtensions([
