@@ -1,7 +1,7 @@
 {
   "name": "webid",
   "description": "WebID module",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "author": {
     "name": "Baptiste Lafontaine",
     "email": "baptiste33@gmail.com"
