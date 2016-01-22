@@ -119,7 +119,7 @@ function generate (options, callback) {
   var publicKey = certificate.exportPublicKey(options.spkac).toString()
   cert.publicKey = pki.publicKeyFromPem(publicKey)
 
-  // Validity of 1 year
+  // Validity of 10 years
   cert.validity.notBefore = new Date()
   cert.validity.notAfter = new Date()
   cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + options.duration)
