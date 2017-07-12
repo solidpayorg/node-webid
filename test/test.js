@@ -35,6 +35,30 @@ describe('WebID', function () {
               done()
             })
       })
+
+      it('should succeed on text/turtle', function (done) {
+        tls.verifyKey(
+            validCert,
+            'https://test_nicola.databox.me/profile/card#me',
+            '',
+            'text/turtle',
+            function (err, result) {
+              expect(err.message).to.not.include('Could not load/parse profile data')
+              done()
+            })
+      })
+
+      it('should succeed on text/turtle; charset=utf-8', function (done) {
+        tls.verifyKey(
+            validCert,
+            'https://test_nicola.databox.me/profile/card#me',
+            '',
+            'text/turtle; charset=utf-8',
+            function (err, result) {
+              expect(err.message).to.not.include('Could not load/parse profile data')
+              done()
+            })
+      })
     })
 
     describe('verify', function () {
