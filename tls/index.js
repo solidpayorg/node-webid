@@ -29,13 +29,13 @@ function verify (certificate, callback) {
 
   // Get first URI
   var uri = uris.shift()
-  get(uri, function (err, body, headers) {
+  get(uri, function (err, body, contentType) {
     if (err) {
       return callback(err)
     }
 
     // Verify Key
-    verifyKey(certificate, uri, body, headers, function (err, success) {
+    verifyKey(certificate, uri, body, contentType, function (err, success) {
       return callback(err, uri)
     })
   })
@@ -54,7 +54,7 @@ function getUris (certificate) {
   return uris
 }
 
-function verifyKey (certificate, uri, profile, mimeType, callback) {
+function verifyKey (certificate, uri, profile, contentType, callback) {
   var graph = new Graph()
   var found = false
 
@@ -66,6 +66,7 @@ function verifyKey (certificate, uri, profile, mimeType, callback) {
     return callback(new Error('Missing exponent value in client certificate'))
   }
 
+  var mimeType = contentType.replace(/;.*/, '')
   parse(profile, graph, uri, mimeType, function (err) {
     if (err) {
       return callback(err)
