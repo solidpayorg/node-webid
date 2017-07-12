@@ -31,7 +31,7 @@ describe('WebID', function () {
             '',
             'text/html',
             function (err, result) {
-              expect(err).to.equal('Cound not load/parse profile data')
+              expect(err.message).to.include('Could not load/parse profile data')
               done()
             })
       })
