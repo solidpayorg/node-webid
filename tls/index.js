@@ -66,6 +66,10 @@ function verifyKey (certificate, uri, profile, contentType, callback) {
     return callback(new Error('Missing exponent value in client certificate'))
   }
 
+  if (!contentType) {
+    return callback(new Error('No value specified for the Content-Type header'))
+  }
+
   var mimeType = contentType.replace(/;.*/, '')
   parse(profile, graph, uri, mimeType, function (err) {
     if (err) {
