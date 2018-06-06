@@ -57,7 +57,7 @@ var webid = require('webid')('tls')
 app.post('/register', bodyParser(), function (req, res) {
   var options = {
     // <keygen name=spkack>
-    spkac: new Buffer(req.body.spkac),
+    spkac: Buffer.from(req.body.spkac),
     agent: req.session.userWebId
   }
   webid.generate(options, function(err, cert) {
@@ -65,7 +65,7 @@ app.post('/register', bodyParser(), function (req, res) {
     var der = asn1.toDer(pki.certificateToAsn1(cert)).getBytes()
     // Send back the generated certificate with a WebID URI in the subjectAltName
     res.set('Content-Type', 'application/x-x509-user-cert')
-    res.send(new Buffer(der, 'binary'))
+    res.send(Buffer.from(der, 'binary'))
   })
 })
 ```
@@ -75,7 +75,7 @@ app.post('/register', bodyParser(), function (req, res) {
 ```javascript
 var options = {
   // <keygen name=spkack>
-  spkac: new Buffer(req.body.spkac),
+  spkac: Buffer.from(req.body.spkac),
   agent: req.session.userWebId,
   commonName: '',
   organizationName: '',

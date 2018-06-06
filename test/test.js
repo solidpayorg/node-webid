@@ -4,7 +4,6 @@ var chai = require('chai')
 var fs = require('fs')
 var expect = chai.expect
 var crypto = require('crypto')
-crypto.DEFAULT_ENCODING = 'buffer'
 var certificate = new crypto.Certificate()
 var forge = require('node-forge')
 var pki = forge.pki
@@ -158,15 +157,7 @@ describe('WebID', function () {
       it('should create a valid certificate', function (done) {
         this.timeout(10000)
         // Read in the spkac.cnf file.
-        var spkacFile
-        try {
-            spkacFile = fs.readFileSync(__dirname + '/spkac.cnf')
-            spkacFile = new Buffer(spkacFile)
-        } catch (err) {
-            expect(err).to.not.exist
-        }
-
-        expect(spkacFile).to.exist
+        var spkacFile = Buffer.from(fs.readFileSync(__dirname + '/spkac.cnf'))
 
         var opts = {
             spkac: spkacFile,
