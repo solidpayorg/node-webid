@@ -8,7 +8,6 @@ var parse = require('../lib/parse')
 var forge = require('node-forge')
 var url = require('url')
 var crypto = require('crypto')
-crypto.DEFAULT_ENCODING = 'buffer'
 var certificate = new crypto.Certificate()
 var pki = forge.pki
 var Graph = $rdf.graph

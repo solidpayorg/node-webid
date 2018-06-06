@@ -4,7 +4,6 @@ var chai = require('chai')
 var fs = require('fs')
 var expect = chai.expect
 var crypto = require('crypto')
-crypto.DEFAULT_ENCODING = 'buffer'
 var certificate = new crypto.Certificate()
 var forge = require('node-forge')
 var pki = forge.pki
