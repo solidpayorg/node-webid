@@ -157,15 +157,7 @@ describe('WebID', function () {
       it('should create a valid certificate', function (done) {
         this.timeout(10000)
         // Read in the spkac.cnf file.
-        var spkacFile
-        try {
-            spkacFile = fs.readFileSync(__dirname + '/spkac.cnf')
-            spkacFile = new Buffer(spkacFile)
-        } catch (err) {
-            expect(err).to.not.exist
-        }
-
-        expect(spkacFile).to.exist
+        var spkacFile = Buffer.from(fs.readFileSync(__dirname + '/spkac.cnf'))
 
         var opts = {
             spkac: spkacFile,
