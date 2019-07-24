@@ -178,7 +178,7 @@ function generate (options, callback) {
 
   // Generate a new keypair to sign the certificate
   // TODO this make is not really "self-signed"
-  var keys = pki.rsa.generateKeyPair(1024)
+  var keys = pki.rsa.generateKeyPair(2048)
   cert.sign(keys.privateKey, forge.md.sha256.create())
 
   return callback(null, cert)
